@@ -1,0 +1,45 @@
+{
+  "corpus_id": "localfind-p0-example-v1",
+  "version": 1,
+  "corpus_root_note": "Committed sample media under tests/fixtures/samples/. Validate with: python benchmarks/validate_corpus.py --corpus benchmarks/corpus.example.json --queries benchmarks/queries.example.json --media-root tests/fixtures/samples",
+  "assets": [
+    {
+      "asset_id": "img_001",
+      "modality": "image",
+      "rel_path": "img_red.png",
+      "width": 320,
+      "height": 240,
+      "license": "synthetic-CC0",
+      "distribute": true,
+      "provenance": "synthetic-ffmpeg:generate_corpus.py sample-red",
+      "description": "Solid red frame, 320x240.",
+      "tags": ["red", "solid"]
+    },
+    {
+      "asset_id": "img_002",
+      "modality": "image",
+      "rel_path": "img_bars.png",
+      "width": 320,
+      "height": 240,
+      "license": "synthetic-CC0",
+      "distribute": true,
+      "provenance": "synthetic-ffmpeg:generate_corpus.py sample-bars",
+      "description": "SMPTE color bars test pattern, 320x240.",
+      "tags": ["color-bars", "test-pattern"]
+    },
+    {
+      "asset_id": "vid_001",
+      "modality": "video",
+      "rel_path": "vid_tones.mp4",
+      "width": 320,
+      "height": 240,
+      "duration_ms": 4000,
+      "fps": 30,
+      "license": "synthetic-CC0",
+      "distribute": true,
+      "provenance": "synthetic-ffmpeg:generate_corpus.py sample-tones",
+      "description": "Two-tone clip: solid red for 0-2000 ms, solid blue for 2000-4000 ms.",
+      "tags": ["red", "blue", "two-tone"]
+    }
+  ]
+}

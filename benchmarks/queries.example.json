@@ -1,0 +1,61 @@
+{
+  "query_set_id": "localfind-p0-example-queries-v1",
+  "version": 1,
+  "corpus_id": "localfind-p0-example-v1",
+  "queries": [
+    {
+      "query_id": "q001",
+      "text": "solid red image",
+      "query_class": "visual",
+      "modality": "image",
+      "expected": [{ "asset_id": "img_001", "grade": 2 }],
+      "notes": "Only the solid-red frame is highly relevant; color bars merely contain red.",
+      "provenance": "hand-written-example"
+    },
+    {
+      "query_id": "q002",
+      "text": "color bars test pattern",
+      "query_class": "visual",
+      "modality": "image",
+      "expected": [{ "asset_id": "img_002", "grade": 2 }],
+      "notes": "",
+      "provenance": "hand-written-example"
+    },
+    {
+      "query_id": "q003",
+      "text": "red screen in video",
+      "query_class": "visual",
+      "modality": "video",
+      "expected": [{ "asset_id": "vid_001", "grade": 2, "start_ms": 0, "end_ms": 2000, "tolerance_ms": 500 }],
+      "notes": "First half of the two-tone clip.",
+      "provenance": "hand-written-example"
+    },
+    {
+      "query_id": "q004",
+      "text": "blue screen in video",
+      "query_class": "visual",
+      "modality": "video",
+      "expected": [{ "asset_id": "vid_001", "grade": 2, "start_ms": 2000, "end_ms": 4000, "tolerance_ms": 500 }],
+      "notes": "Second half of the two-tone clip. Same asset, disjoint interval from q003.",
+      "provenance": "hand-written-example"
+    },
+    {
+      "query_id": "q005",
+      "text": "vid_tones",
+      "query_class": "exact_filename",
+      "modality": "video",
+      "expected": [{ "asset_id": "vid_001", "grade": 2, "start_ms": 0, "end_ms": 4000, "tolerance_ms": 500 }],
+      "notes": "Identifier-shaped query: must resolve without any model inference (R-17).",
+      "provenance": "hand-written-example"
+    },
+    {
+      "query_id": "q006",
+      "text": "a black dog walking in a park",
+      "query_class": "negative",
+      "modality": "any",
+      "expected": [],
+      "notes": "Nothing in the corpus depicts animals. A retriever must return nothing relevant.",
+      "provenance": "hand-written-example"
+    }
+  ]
+}

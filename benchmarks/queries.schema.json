@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://localfind.example/schemas/queries.schema.json",
+  "title": "LocalFind Phase-0 relevance judgments",
+  "description": "Annotated queries for retrieval evaluation (PLAN.md section 9). A query may list several relevant assets/segments; negative queries list none. Grades: 2 = highly relevant, 1 = partially relevant.",
+  "type": "object",
+  "required": ["query_set_id", "version", "corpus_id", "queries"],
+  "additionalProperties": false,
+  "properties": {
+    "query_set_id": { "type": "string" },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bump together with the corpus manifest when judgments change."
+    },
+    "corpus_id": {
+      "type": "string",
+      "description": "Must equal the corpus manifest's corpus_id."
+    },
+    "queries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/query" }
+    }
+  },
+  "$defs": {
+    "query": {
+      "type": "object",
+      "required": ["query_id", "text", "query_class", "modality", "expected", "provenance"],
+      "additionalProperties": false,
+      "properties": {
+        "query_id": {
+          "type": "string",
+          "pattern": "^q[0-9]{3}$",
+          "description": "Stable ID, unique in the set, e.g. 'q014'."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The literal query string fed to the retriever."
+        },
+        "query_class": {
+          "enum": ["visual", "exact_filename", "semantic_image", "negative"],
+          "description": "visual: natural-language visual description. exact_filename: identifier-shaped filename/path query (must work without inference). semantic_image: conceptual (non-literal) image query. negative: must return nothing (expected is empty)."
+        },
+        "modality": {
+          "enum": ["image", "video", "any"],
+          "description": "Which asset modality the query targets."
+        },
+        "expected": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/expectation" },
+          "description": "Relevant assets. Empty if and only if query_class is 'negative'."
+        },
+        "notes": { "type": "string" },
+        "provenance": { "type": "string" }
+      }
+    },
+    "expectation": {
+      "type": "object",
+      "required": ["asset_id", "grade"],
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "description": "Must reference an asset_id in the paired corpus manifest."
+        },
+        "grade": {
+          "type": "integer",
+          "enum": [1, 2],
+          "description": "2 = highly relevant, 1 = partially relevant."
+        },
+        "start_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "REQUIRED for video expectations: relevant interval start. Forbidden for images."
+        },
+        "end_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "REQUIRED for video expectations: relevant interval end, start_ms < end_ms <= asset duration. Forbidden for images."
+        },
+        "tolerance_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Timestamp slack the evaluator (P0-T007) allows around [start_ms, end_ms]. Informative here; enforced there."
+        }
+      }
+    }
+  }
+}

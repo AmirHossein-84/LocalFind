@@ -1,0 +1,114 @@
+{
+  "model_id": "google/embeddinggemma-2",
+  "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b",
+  "device": "cpu",
+  "torch_dtype": "torch.float32",
+  "vectors": {
+    "query_SearchQuery": {
+      "dim": 768,
+      "finite": true,
+      "norm": 0.9999999817024098,
+      "normalized": true,
+      "sample": [
+        0.01958850584924221,
+        -0.009894214570522308,
+        -0.009504652582108974,
+        -0.01678338274359703
+      ]
+    },
+    "document_Document-prefix": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.0000000077031674,
+      "normalized": true,
+      "sample": [
+        -0.008654359728097916,
+        -0.01416742242872715,
+        0.03139650821685791,
+        0.019848866388201714
+      ]
+    },
+    "document_manual-title-none": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.0000000077031674,
+      "normalized": true,
+      "sample": [
+        -0.008654359728097916,
+        -0.01416742242872715,
+        0.03139650821685791,
+        0.019848866388201714
+      ]
+    },
+    "query_no-prefix": {
+      "dim": 768,
+      "finite": true,
+      "norm": 0.9999999677065445,
+      "normalized": true,
+      "sample": [
+        0.0030311462469398975,
+        -0.00552768399938941,
+        0.014667695388197899,
+        -0.014350310899317265
+      ]
+    },
+    "image_red": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.000000077164298,
+      "normalized": true,
+      "sample": [
+        -0.020153168588876724,
+        -0.0692618116736412,
+        0.03908100351691246,
+        -0.0038683658931404352
+      ]
+    },
+    "image_bars": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.000000003998,
+      "normalized": true,
+      "sample": [
+        -0.007187760900706053,
+        -0.06364667415618896,
+        0.04924315586686134,
+        -0.024125849828124046
+      ]
+    }
+  },
+  "timings_s": {
+    "load_cold": 4.203082700027153,
+    "text_query_warm_mean": 0.05371465999633074,
+    "image_warm_mean": 3.640467139997054
+  },
+  "versions": {
+    "python": "3.12.10",
+    "torch": "2.14.1+cpu",
+    "cuda_available": false,
+    "cuda_name": null,
+    "sentence_transformers": "6.1.0",
+    "transformers": "5.19.0",
+    "pillow": "12.3.0"
+  },
+  "checks": {
+    "param_dtypes": [
+      "torch.float32"
+    ],
+    "document_prefix_equivalence_cos": 1.0,
+    "document_prefix_equivalent": true,
+    "similarity_query(Document)_prefixed": 0.785369701544755,
+    "similarity_query(Document)_unprefixed": 0.7054283851293279,
+    "vision_control_same_pixels_cos": 0.9999999999999998,
+    "vision_path_taken": true,
+    "crossmodal_cos_query_vs_red": 0.7549226164374553,
+    "crossmodal_cos_query_vs_bars": 0.609293437479146,
+    "crossmodal_ranking": "img_red.png > img_bars.png",
+    "crossmodal_red_top": true
+  },
+  "memory": {
+    "rss_before_mb": 408.444928,
+    "rss_after_mb": 2510.245888,
+    "rss_delta_mb": 2101.80096
+  }
+}

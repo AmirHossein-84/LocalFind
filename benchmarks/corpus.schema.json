@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://localfind.example/schemas/corpus.schema.json",
+  "title": "LocalFind Phase-0 corpus manifest",
+  "description": "Lists every evaluation asset. Paths are relative to the corpus root (use --media-root in validate_corpus.py). No model-specific fields by design (R-07: evaluation stays model-agnostic).",
+  "type": "object",
+  "required": ["corpus_id", "version", "assets"],
+  "additionalProperties": false,
+  "properties": {
+    "corpus_id": {
+      "type": "string",
+      "description": "Stable corpus identifier, e.g. 'localfind-p0-synth-v1'."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Manifest version. Bump when assets or judgments change; P0-T007 records this version in benchmark reports."
+    },
+    "corpus_root_note": {
+      "type": "string",
+      "description": "Human note saying where the media lives (generated dir or private root). Never a machine-specific absolute path."
+    },
+    "assets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/asset" }
+    }
+  },
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "required": ["asset_id", "modality", "rel_path", "license", "distribute", "provenance", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "pattern": "^[a-z]+_[0-9]{3}$",
+          "description": "Stable ID, unique in the manifest, e.g. 'img_004', 'vid_012'."
+        },
+        "modality": { "enum": ["image", "video"] },
+        "rel_path": {
+          "type": "string",
+          "description": "Forward-slash path relative to the corpus root. Must not be absolute or contain '..'."
+        },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "duration_ms": {
+          "type": ["integer", "null"],
+          "description": "REQUIRED (>0) for video: measured clip duration in integer ms. Must be absent/null for images."
+        },
+        "fps": { "type": ["number", "null"] },
+        "sha256": {
+          "type": "string",
+          "description": "Optional content hash. The local generator fills it; private contributors may omit it."
+        },
+        "license": {
+          "type": "string",
+          "description": "Redistribution terms, e.g. 'synthetic-CC0' for generated media. Anything not freely redistributable must use distribute=false."
+        },
+        "distribute": {
+          "type": "boolean",
+          "description": "True only when the file may be committed/shared. Private assets use false and live outside git (see benchmarks/README.md)."
+        },
+        "provenance": {
+          "type": "string",
+          "description": "How the asset was obtained, e.g. 'synthetic-ffmpeg:<generator-version>' or 'private-consented'."
+        },
+        "description": {
+          "type": "string",
+          "description": "What is visibly depicted. Judgments are written against this ground truth, not against model output."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "generator": {
+          "type": "object",
+          "description": "Present for synthesized assets: exact recipe so anyone can reproduce the bytes."
+        }
+      }
+    }
+  }
+}
