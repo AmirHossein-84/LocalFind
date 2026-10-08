@@ -1,0 +1,271 @@
+{
+  "model_id": "google/embeddinggemma-2",
+  "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b",
+  "model_source": "project-local",
+  "device": "cpu",
+  "torch_dtype": "torch.float32",
+  "preprocessing": {
+    "video_input": {
+      "text": "<|video|>"
+    },
+    "sampling": "processor default 1 FPS uniform (do_sample_frames; explicit fps=30 metadata)",
+    "decode_backend": "pyav (av package) full-frame decode; torchcodec unusable on this host, see doc",
+    "segment_extraction": "ffmpeg accurate-seek re-encode, libx264 320x240 30fps yuv420p"
+  },
+  "vectors": {
+    "vid_001/halves/[0,3000]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.000000030541802,
+      "normalized": true
+    },
+    "vid_001/halves/[3000,6000]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 0.9999999339447968,
+      "normalized": true
+    },
+    "vid_001/thirds/[0,2000]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.000000065816873,
+      "normalized": true
+    },
+    "vid_001/thirds/[2000,4000]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.0000000189791354,
+      "normalized": true
+    },
+    "vid_001/thirds/[4000,6000]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 0.999999970424537,
+      "normalized": true
+    },
+    "vid_009/halves/[0,2500]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.0000000875656314,
+      "normalized": true
+    },
+    "vid_009/halves/[2500,5000]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 0.9999999819903816,
+      "normalized": true
+    },
+    "vid_009/thirds/[0,1666]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.0000000682890153,
+      "normalized": true
+    },
+    "vid_009/thirds/[1666,3333]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 1.000000007485178,
+      "normalized": true
+    },
+    "vid_009/thirds/[3333,5000]": {
+      "dim": 768,
+      "finite": true,
+      "norm": 0.999999987028485,
+      "normalized": true
+    }
+  },
+  "segments": [
+    {
+      "asset_id": "vid_001",
+      "strategy": "halves",
+      "start_ms": 0,
+      "end_ms": 3000,
+      "seg_file": "vid_001_halves_0_3000.mp4",
+      "vec": "vid_001/halves/[0,3000]"
+    },
+    {
+      "asset_id": "vid_001",
+      "strategy": "halves",
+      "start_ms": 3000,
+      "end_ms": 6000,
+      "seg_file": "vid_001_halves_3000_6000.mp4",
+      "vec": "vid_001/halves/[3000,6000]"
+    },
+    {
+      "asset_id": "vid_001",
+      "strategy": "thirds",
+      "start_ms": 0,
+      "end_ms": 2000,
+      "seg_file": "vid_001_thirds_0_2000.mp4",
+      "vec": "vid_001/thirds/[0,2000]"
+    },
+    {
+      "asset_id": "vid_001",
+      "strategy": "thirds",
+      "start_ms": 2000,
+      "end_ms": 4000,
+      "seg_file": "vid_001_thirds_2000_4000.mp4",
+      "vec": "vid_001/thirds/[2000,4000]"
+    },
+    {
+      "asset_id": "vid_001",
+      "strategy": "thirds",
+      "start_ms": 4000,
+      "end_ms": 6000,
+      "seg_file": "vid_001_thirds_4000_6000.mp4",
+      "vec": "vid_001/thirds/[4000,6000]"
+    },
+    {
+      "asset_id": "vid_009",
+      "strategy": "halves",
+      "start_ms": 0,
+      "end_ms": 2500,
+      "seg_file": "vid_009_halves_0_2500.mp4",
+      "vec": "vid_009/halves/[0,2500]"
+    },
+    {
+      "asset_id": "vid_009",
+      "strategy": "halves",
+      "start_ms": 2500,
+      "end_ms": 5000,
+      "seg_file": "vid_009_halves_2500_5000.mp4",
+      "vec": "vid_009/halves/[2500,5000]"
+    },
+    {
+      "asset_id": "vid_009",
+      "strategy": "thirds",
+      "start_ms": 0,
+      "end_ms": 1666,
+      "seg_file": "vid_009_thirds_0_1666.mp4",
+      "vec": "vid_009/thirds/[0,1666]"
+    },
+    {
+      "asset_id": "vid_009",
+      "strategy": "thirds",
+      "start_ms": 1666,
+      "end_ms": 3333,
+      "seg_file": "vid_009_thirds_1666_3333.mp4",
+      "vec": "vid_009/thirds/[1666,3333]"
+    },
+    {
+      "asset_id": "vid_009",
+      "strategy": "thirds",
+      "start_ms": 3333,
+      "end_ms": 5000,
+      "seg_file": "vid_009_thirds_3333_5000.mp4",
+      "vec": "vid_009/thirds/[3333,5000]"
+    }
+  ],
+  "timings_s": {
+    "load": 4.170739700028207,
+    "probe_mean": 0.06502750003710389,
+    "extract_mean": 0.10058097998262383,
+    "decode_mean": 0.046074810007121415,
+    "encode_mean": 3.487622240005294,
+    "encode_n": 10
+  },
+  "checks": {},
+  "ranking": [
+    {
+      "query": "red screen",
+      "expected": {
+        "asset_id": "vid_001",
+        "start_ms": 0,
+        "end_ms": 3000
+      },
+      "top3": [
+        {
+          "asset_id": "vid_001",
+          "strategy": "halves",
+          "start_ms": 0,
+          "end_ms": 3000,
+          "cos": 0.7371
+        },
+        {
+          "asset_id": "vid_001",
+          "strategy": "thirds",
+          "start_ms": 0,
+          "end_ms": 2000,
+          "cos": 0.7311
+        },
+        {
+          "asset_id": "vid_001",
+          "strategy": "thirds",
+          "start_ms": 2000,
+          "end_ms": 4000,
+          "cos": 0.7031
+        }
+      ],
+      "top1_hit": true
+    },
+    {
+      "query": "blue screen",
+      "expected": {
+        "asset_id": "vid_001",
+        "start_ms": 3000,
+        "end_ms": 6000
+      },
+      "top3": [
+        {
+          "asset_id": "vid_001",
+          "strategy": "halves",
+          "start_ms": 3000,
+          "end_ms": 6000,
+          "cos": 0.7467
+        },
+        {
+          "asset_id": "vid_001",
+          "strategy": "thirds",
+          "start_ms": 4000,
+          "end_ms": 6000,
+          "cos": 0.7465
+        },
+        {
+          "asset_id": "vid_001",
+          "strategy": "thirds",
+          "start_ms": 2000,
+          "end_ms": 4000,
+          "cos": 0.7097
+        }
+      ],
+      "top1_hit": true
+    },
+    {
+      "query": "moving test pattern",
+      "expected": {
+        "asset_id": "vid_009",
+        "start_ms": 0,
+        "end_ms": 5000
+      },
+      "top3": [
+        {
+          "asset_id": "vid_009",
+          "strategy": "thirds",
+          "start_ms": 0,
+          "end_ms": 1666,
+          "cos": 0.7257
+        },
+        {
+          "asset_id": "vid_009",
+          "strategy": "thirds",
+          "start_ms": 3333,
+          "end_ms": 5000,
+          "cos": 0.7235
+        },
+        {
+          "asset_id": "vid_009",
+          "strategy": "halves",
+          "start_ms": 2500,
+          "end_ms": 5000,
+          "cos": 0.7108
+        }
+      ],
+      "top1_hit": true
+    }
+  ],
+  "memory_mb": {
+    "rss_before": 410.968064,
+    "rss_after": 2628.644864,
+    "rss_delta": 2217.6767999999997
+  }
+}

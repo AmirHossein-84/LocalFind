@@ -1,0 +1,77 @@
+# ── Models, weights, and large binaries (R-24, R-26) ──
+# Never commit model weights or embeddings from private assets.
+/models/
+models/
+*.bin
+*.safetensors
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.gguf
+
+# ── App-owned runtime/index data ──
+# Local app databases, vector stores, thumbnails, and caches.
+# Per PLAN.md §6 these live under the per-user OS app-data dir at runtime;
+# ignore any local copies produced during development/tests.
+db/
+thumbs/
+tmp/
+logs/
+*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db-wal
+*.db-shm
+
+# ── Private / unlicensed test media and benchmark corpora (R-24) ──
+# Only synthetic, consented, or redistributable fixtures may be committed
+# under tests/fixtures/ and benchmarks/. Private local corpora stay out.
+benchmarks/corpus/
+benchmarks/corpus-private/
+benchmarks/private/
+tests/fixtures/private/
+docs/benchmarks/*-local.md
+
+# ── Credentials and secrets (R-26) ──
+.env
+.env.*
+*.pem
+*.key
+secrets/
+credentials.json
+
+# ── Rust / Tauri build output ──
+target/
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/WixTools/
+*.node
+*.dll.exp
+*.lib
+
+# ── Node / frontend ──
+node_modules/
+.pnpm-store/
+apps/desktop/build/
+.svelte-kit/
+
+# ── Python worker ──
+__pycache__/
+*.pyc
+.venv/
+venv/
+workers/inference/.mypy_cache/
+workers/inference/.pytest_cache/
+*.egg-info/
+
+# ── OS / editor noise ──
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
