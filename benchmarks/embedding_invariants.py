@@ -35,76 +35,12 @@ import tempfile
 import time
 from pathlib import Path
 
+from compat import (NATIVE_DIM, TRUNC_DIMS, check_compatible,
+                      check_vector_values, make_sig, sig_string,
+                      truncate_renorm)
 from local_model import MODEL_ID, REVISION, resolve_model_source
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-NATIVE_DIM = 768
-TRUNC_DIMS = (512, 256, 128)
-SHORT_REV = REVISION[:7]
-ENCODERS = "text+image"  # audio_config=None, as in P0-T004/P0-T005
-NORM = "l2"
-SUPPORTED_DTYPES = ("fp32", "bf16")  # card rule: NEVER fp16
-
-
-# --------------------------------------------------------------------------
-# A. Compatibility contract (pure; prototype for the future worker contract)
-# --------------------------------------------------------------------------
-
-def make_sig(modality, dim, dtype="fp32", prep="p0t006-v1", segment="n/a"):
-    """Compact embedding compatibility identifier.
-
-    Fields (PLAN section 6 invariant 1 + task list): model id, pinned
-    revision, encoder set, preprocessing version, modality pipeline,
-    dimension, dtype, normalization, video segment policy.
-    """
-    if dtype not in SUPPORTED_DTYPES:
-        raise ValueError(f"E_DTYPE_POLICY: dtype {dtype!r} not supported (never fp16)")
-    if dim not in (NATIVE_DIM,) + TRUNC_DIMS:
-        raise ValueError(f"E_DIM_POLICY: dim {dim} not in (768, 512, 256, 128)")
-    return {"model": "eg2", "model_id": MODEL_ID, "revision": SHORT_REV,
-            "encoders": ENCODERS, "prep": prep, "modality": modality,
-            "dim": dim, "dtype": dtype, "norm": NORM, "segment": segment}
-
-
-def sig_string(sig):
-    return ("{model}@{revision}|{encoders}|{prep}|{modality}|{segment}|"
-            "{dim}|{dtype}|{norm}".format(**sig))
-
-
-def check_compatible(query_sig, doc_sig):
-    """Raise ValueError unless two signatures may be scored together."""
-    for field in ("model", "revision", "encoders", "prep", "modality",
-                  "dim", "dtype", "norm", "segment"):
-        if query_sig.get(field) != doc_sig.get(field):
-            raise ValueError(
-                f"E_MISMATCH: field {field!r}: {query_sig.get(field)!r} != "
-                f"{doc_sig.get(field)!r} -- refusing to mix")
-    return True
-
-
-def check_vector_values(vals, dim):
-    """Reject non-finite / zero-norm / unnormalized vectors explicitly."""
-    if len(vals) != dim:
-        raise ValueError(f"E_DIM: len {len(vals)} != {dim}")
-    if not all(math.isfinite(v) for v in vals):
-        raise ValueError("E_NONFINITE: NaN or Inf present")
-    norm = math.sqrt(sum(v * v for v in vals))
-    if norm == 0.0:
-        raise ValueError("E_ZERO_NORM: zero vector")
-    if abs(norm - 1.0) > 1e-4:
-        raise ValueError(f"E_NORM: norm {norm:.6f} != 1.0 (re-normalize after truncation)")
-    return norm
-
-
-def truncate_renorm(vals, dim):
-    """Matryoshka slice (leading dims) + L2 re-normalize. Card rule."""
-    if dim == NATIVE_DIM:
-        return list(vals)
-    part = list(vals[:dim])
-    norm = math.sqrt(sum(v * v for v in part))
-    if norm == 0.0 or not math.isfinite(norm):
-        raise ValueError("E_TRUNC: truncated slice has zero/non-finite norm")
-    return [v / norm for v in part]
 
 
 def run_negative_tests(results):

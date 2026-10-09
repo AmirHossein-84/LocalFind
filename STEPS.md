@@ -47,7 +47,7 @@
   - **Do:** Compare fp32 versus supported bf16 on representative hardware, dimensions 768/512/256, L2 re-normalize truncated outputs, validate finite values/nonzero norms; reject dimension/signature mismatch. Capture example prefix differences for text queries.
   - **Done / prove:** tests fail on NaN/inf, mixed dimensions, wrong normalization; report chosen candidate dimension *only* after quality comparison. **Do not:** silently switch model or precision.
 
-- [ ] **P0-T007 — Retrieval-quality feasibility benchmark**
+- [x] **P0-T007 — Retrieval-quality feasibility benchmark**
   - **Deps:** P0-T003, P0-T005, P0-T006. **Touch:** `benchmarks/evaluate.py`, `docs/benchmarks/retrieval-v1.md`.
   - **Do:** Build an exact cosine retrieval prototype with labeled images and video segments; measure Recall@1/@5 and MRR@10 on ≥30 judged visual queries, with filename-only and keyframe baseline. Fix deterministic seed, corpus manifest and config.
   - **Done / prove:** reproducible report with per-query errors; proposed gate Recall@5 ≥0.75 on this *curated suite* or explicit PIVOT discussion. **Do not:** publish hand-picked successes as comprehensive quality claims.
@@ -348,14 +348,26 @@ Reviewer decision + date: pending
 
 **Queue:** empty at initialization.
 
+```text
+ARQ-001 | status: open | task: P0-T007
+Problem: visual Recall@5 0.677 @768-d misses the fixed 0.75 feasibility gate on the curated 31-query suite.
+Evidence: docs/benchmarks/retrieval-v1.md + retrieval-v1-results.json (P0-T007 exit 0); image queries R@5 0.775 but video queries 0.545; dominant failure is cross-modal crowding (red images outrank red video halves); near-duplicate synthetics + single-relevant labels contribute; keyframe baseline 0.629 < segment 0.677; filename baseline confounded by label-leaking filenames.
+Current contract: PLAN.md section 2 (Recall@5 >= 0.75 gate; fail triggers investigation, not silent lowering) + R-08 (segment-level video).
+Options: A. Keep model, fix methodology first (per-modality score normalization/RRF per PLAN section 9, judgment revision for repeated colors, realistic filenames) then re-measure (low cost, no arch change). B. Change segmentation/model now (high cost, premature before fixing known measurement confounds).
+Recommendation: A -- the miss is measurement/fusion-dominated, not proof the model cannot retrieve (P0-T004/P0-T005 smokes show genuine visual discrimination).
+Impact: no migration; P0-T008/T009/T010/T011 proceed; M0 decision stays pending review.
+Blocking: no (for P0-T008..T011); yes for M0 GO.
+Reviewer decision + date: pending
+```
+
 ## Project State (source of truth)
 
 - **Current Phase:** Phase 0 — feasibility
 - **Current Milestone:** M0 (pending)
-- **Current Task:** P0-T007 — Retrieval-quality feasibility benchmark
-- **Last Completed Task:** P0-T006 — Dtype, dimension and embedding compatibility tests (2026-10-08; 768/512/256/128 renorm-validated, 17 negative gates, bf16 rejected on CPU, fp32 only, review APPROVED, no dimension chosen)
+- **Current Task:** P0-T008 — Video segmentation policy comparison
+- **Last Completed Task:** P0-T007 — Retrieval-quality feasibility benchmark (2026-10-08; visual R@5 0.677 @768 vs 0.75 gate → PIVOT-SIGNAL ARQ-001; 27 unit tests green; keyframe baseline measured)
 - **Blocked Tasks:** None recorded (Phase 0 dependencies deliberately pending)
 - **Known Blockers:** Windows runtime compatibility, retrieval quality, packaging and license obligations must be verified in Phase 0; these are *research gates*, not known failures.
-- **Architecture Review Queue:** Empty
+- **Architecture Review Queue:** ARQ-001 open (P0-T007 gate miss → PIVOT-SIGNAL; M0 GO blocked pending review)
 - **New Risks:** See PLAN.md §14; add discoveries with risk ID.
-- **Last Documentation Review:** 2026-10-08 (P0-T006 acceptance verified incl. independent review; no product code exists)
+- **Last Documentation Review:** 2026-10-08 (P0-T007 measured incl. independent review; gate missed, ARQ-001 filed; no product code exists)
