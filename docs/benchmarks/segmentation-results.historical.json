@@ -1,0 +1,684 @@
+{
+  "strategies": {
+    "halves": {
+      "n_units": 40,
+      "mixed": {
+        "n": 11,
+        "seg_recall@1": 0.2727272727272727,
+        "seg_recall@5": 0.5,
+        "seg_mrr@10": 0.6666666666666666,
+        "file_recall@5": 0.8181818181818182,
+        "file_mrr@10": 0.6818181818181818,
+        "top1_time_err_ms_mean": 708.3333333333334,
+        "top1_time_err_n": 6,
+        "dup_top5_queries": 5,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q023",
+            "text": "green screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q024",
+            "text": "magenta screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q027",
+            "text": "cyan screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q028",
+            "text": "orange screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          }
+        ]
+      },
+      "video_only": {
+        "n": 11,
+        "seg_recall@1": 0.36363636363636365,
+        "seg_recall@5": 0.5454545454545454,
+        "seg_mrr@10": 0.800865800865801,
+        "file_recall@5": 1.0,
+        "file_mrr@10": 0.8409090909090909,
+        "top1_time_err_ms_mean": 531.25,
+        "top1_time_err_n": 8,
+        "dup_top5_queries": 10,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q023",
+            "text": "green screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q024",
+            "text": "magenta screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.25,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q027",
+            "text": "cyan screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q028",
+            "text": "orange screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          }
+        ]
+      },
+      "cost": {
+        "units": 40,
+        "npz_bytes": 133898,
+        "bytes_per_unit": 3347.45,
+        "encode_mean_s": 7.354944007503218,
+        "encode_measured_n": 40
+      }
+    },
+    "w2": {
+      "n_units": 59,
+      "mixed": {
+        "n": 11,
+        "seg_recall@1": 0.25757575757575757,
+        "seg_recall@5": 0.6818181818181818,
+        "seg_mrr@10": 0.6666666666666666,
+        "file_recall@5": 0.8181818181818182,
+        "file_mrr@10": 0.678030303030303,
+        "top1_time_err_ms_mean": 833.3333333333334,
+        "top1_time_err_n": 6,
+        "dup_top5_queries": 9,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.125,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.3333333333333333,
+            "query_id": "q033",
+            "text": "long static blue screen"
+          }
+        ]
+      },
+      "video_only": {
+        "n": 11,
+        "seg_recall@1": 0.3484848484848485,
+        "seg_recall@5": 0.7575757575757577,
+        "seg_mrr@10": 0.8030303030303031,
+        "file_recall@5": 0.9090909090909091,
+        "file_mrr@10": 0.8181818181818182,
+        "top1_time_err_ms_mean": 875.0,
+        "top1_time_err_n": 8,
+        "dup_top5_queries": 11,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.16666666666666666,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.3333333333333333,
+            "query_id": "q033",
+            "text": "long static blue screen"
+          }
+        ]
+      },
+      "cost": {
+        "units": 59,
+        "npz_bytes": 197918,
+        "bytes_per_unit": 3354.5423728813557,
+        "encode_mean_s": 3.113233289828374,
+        "encode_measured_n": 59
+      }
+    },
+    "w2ov50": {
+      "n_units": 93,
+      "mixed": {
+        "n": 11,
+        "seg_recall@1": 0.13636363636363635,
+        "seg_recall@5": 0.5082644628099173,
+        "seg_mrr@10": 0.6545454545454545,
+        "file_recall@5": 0.8181818181818182,
+        "file_mrr@10": 0.678030303030303,
+        "top1_time_err_ms_mean": 833.3333333333334,
+        "top1_time_err_n": 6,
+        "dup_top5_queries": 9,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q023",
+            "text": "green screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q024",
+            "text": "magenta screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.125,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q027",
+            "text": "cyan screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q028",
+            "text": "orange screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q030",
+            "text": "zooming fractal animation"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.3333333333333333,
+            "query_id": "q033",
+            "text": "long static blue screen"
+          }
+        ]
+      },
+      "video_only": {
+        "n": 11,
+        "seg_recall@1": 0.18181818181818182,
+        "seg_recall@5": 0.5764462809917356,
+        "seg_mrr@10": 0.7681818181818181,
+        "file_recall@5": 0.9090909090909091,
+        "file_mrr@10": 0.7954545454545454,
+        "top1_time_err_ms_mean": 875.0,
+        "top1_time_err_n": 8,
+        "dup_top5_queries": 10,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q023",
+            "text": "green screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q024",
+            "text": "magenta screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.16666666666666666,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q027",
+            "text": "cyan screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q028",
+            "text": "orange screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.25,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.3333333333333333,
+            "query_id": "q033",
+            "text": "long static blue screen"
+          }
+        ]
+      },
+      "cost": {
+        "units": 93,
+        "npz_bytes": 312770,
+        "bytes_per_unit": 3363.1182795698924,
+        "encode_mean_s": 7.069134854841151,
+        "encode_measured_n": 93
+      }
+    },
+    "scene": {
+      "n_units": 26,
+      "mixed": {
+        "n": 11,
+        "seg_recall@1": 0.36363636363636365,
+        "seg_recall@5": 0.5909090909090909,
+        "seg_mrr@10": 0.5858585858585859,
+        "file_recall@5": 0.7272727272727273,
+        "file_mrr@10": 0.5858585858585859,
+        "top1_time_err_ms_mean": 600.0,
+        "top1_time_err_n": 5,
+        "dup_top5_queries": 0,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.1111111111111111,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.16666666666666666,
+            "query_id": "q027",
+            "text": "cyan screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          }
+        ]
+      },
+      "video_only": {
+        "n": 11,
+        "seg_recall@1": 0.6818181818181818,
+        "seg_recall@5": 0.8181818181818182,
+        "seg_mrr@10": 0.8818181818181817,
+        "file_recall@5": 1.0,
+        "file_mrr@10": 0.8818181818181817,
+        "top1_time_err_ms_mean": 666.6666666666666,
+        "top1_time_err_n": 9,
+        "dup_top5_queries": 1,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q026",
+            "text": "black screen in video"
+          }
+        ]
+      },
+      "cost": {
+        "units": 26,
+        "npz_bytes": 87310,
+        "bytes_per_unit": 3358.076923076923,
+        "encode_mean_s": 7.98035415769286,
+        "encode_measured_n": 26
+      }
+    },
+    "scenew2": {
+      "n_units": 53,
+      "mixed": {
+        "n": 11,
+        "seg_recall@1": 0.21212121212121213,
+        "seg_recall@5": 0.5909090909090909,
+        "seg_mrr@10": 0.5887445887445888,
+        "file_recall@5": 0.8181818181818182,
+        "file_mrr@10": 0.6212121212121212,
+        "top1_time_err_ms_mean": 800.0,
+        "top1_time_err_n": 5,
+        "dup_top5_queries": 8,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.3333333333333333,
+            "query_id": "q033",
+            "text": "long static blue screen"
+          }
+        ]
+      },
+      "video_only": {
+        "n": 11,
+        "seg_recall@1": 0.30303030303030304,
+        "seg_recall@5": 0.6212121212121212,
+        "seg_mrr@10": 0.7251082251082251,
+        "file_recall@5": 0.9090909090909091,
+        "file_mrr@10": 0.7727272727272727,
+        "top1_time_err_ms_mean": 642.8571428571429,
+        "top1_time_err_n": 7,
+        "dup_top5_queries": 11,
+        "errors": [
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q021",
+            "text": "red screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q022",
+            "text": "blue screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 1.0,
+            "query_id": "q025",
+            "text": "yellow screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.16666666666666666,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.5,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          },
+          {
+            "file_recall@5": 1.0,
+            "file_mrr@10": 0.3333333333333333,
+            "query_id": "q033",
+            "text": "long static blue screen"
+          }
+        ]
+      },
+      "cost": {
+        "units": 53,
+        "npz_bytes": 178304,
+        "bytes_per_unit": 3364.2264150943397,
+        "encode_mean_s": 3.3356890981107563,
+        "encode_measured_n": 53
+      }
+    },
+    "full": {
+      "n_units": 20,
+      "mixed": {
+        "n": 11,
+        "seg_recall@1": 0.36363636363636365,
+        "seg_recall@5": 0.7272727272727273,
+        "seg_mrr@10": 0.5303030303030303,
+        "file_recall@5": 0.7272727272727273,
+        "file_mrr@10": 0.5303030303030303,
+        "top1_time_err_ms_mean": 1125.0,
+        "top1_time_err_n": 4,
+        "dup_top5_queries": 0,
+        "errors": [
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q026",
+            "text": "black screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.16666666666666666,
+            "query_id": "q027",
+            "text": "cyan screen in video"
+          },
+          {
+            "file_recall@5": 0.0,
+            "file_mrr@10": 0.0,
+            "query_id": "q029",
+            "text": "moving broadcast test pattern"
+          }
+        ]
+      },
+      "video_only": {
+        "n": 11,
+        "seg_recall@1": 0.6363636363636364,
+        "seg_recall@5": 1.0,
+        "seg_mrr@10": 0.7757575757575758,
+        "file_recall@5": 1.0,
+        "file_mrr@10": 0.7757575757575758,
+        "top1_time_err_ms_mean": 1071.4285714285713,
+        "top1_time_err_n": 7,
+        "dup_top5_queries": 0,
+        "errors": []
+      },
+      "cost": {
+        "units": 20,
+        "npz_bytes": 67106,
+        "bytes_per_unit": 3355.3,
+        "encode_mean_s": 8.8086392600002,
+        "encode_measured_n": 20
+      }
+    },
+    "keyframe": {
+      "n_units": 20,
+      "mixed": {
+        "n": 11,
+        "seg_recall@1": 0.09090909090909091,
+        "seg_recall@5": 0.36363636363636365,
+        "seg_mrr@10": 0.17222222222222222,
+        "note": "file-level relevance (one vector/video); no timestamps"
+      },
+      "cost": {
+        "units": 20,
+        "npz_bytes": 66742,
+        "bytes_per_unit": 3337.1,
+        "encode_mean_s": 10.286298385003466,
+        "encode_measured_n": 20
+      }
+    }
+  },
+  "config": {
+    "dim": 768,
+    "model_revision": "914f7f89142e33e77833254d9c9b90c3cef7303b",
+    "policies": "seg-v1 (halves|w2|w2ov50|scene|full) + keyframe baseline"
+  },
+  "latency": {
+    "retrieval_only_mean_s": 0.011211618942042784,
+    "n_rankings": 132,
+    "note": "counts mixed-pool + video-only rankings per query"
+  }
+}

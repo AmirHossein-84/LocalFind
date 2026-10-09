@@ -349,7 +349,7 @@ Reviewer decision + date: pending
 **Queue:** empty at initialization.
 
 ```text
-ARQ-001 | status: open | task: P0-T007
+ARQ-001 | status: decided (provisional, Option A) | task: P0-T007
 Problem: visual Recall@5 0.677 @768-d misses the fixed 0.75 feasibility gate on the curated 31-query suite.
 Evidence: docs/benchmarks/retrieval-v1.md + retrieval-v1-results.json (P0-T007 exit 0); image queries R@5 0.775 but video queries 0.545; dominant failure is cross-modal crowding (red images outrank red video halves); near-duplicate synthetics + single-relevant labels contribute; keyframe baseline 0.629 < segment 0.677; filename baseline confounded by label-leaking filenames.
 Current contract: PLAN.md section 2 (Recall@5 >= 0.75 gate; fail triggers investigation, not silent lowering) + R-08 (segment-level video).
@@ -357,7 +357,8 @@ Options: A. Keep model, fix methodology first (per-modality score normalization/
 Recommendation: A -- the miss is measurement/fusion-dominated, not proof the model cannot retrieve (P0-T004/P0-T005 smokes show genuine visual discrimination).
 Impact: no migration; P0-T009/T010/T011 proceed; M0 decision stays pending review.
 Blocking: no (for P0-T009..T011); yes for M0 GO.
-Reviewer decision + date: pending
+Reviewer decision + date: PROVISIONAL Option A (2026-10-09) — Continue with
+EmbeddingGemma 2 and investigate hybrid/modality-aware retrieval.
 
 Update 2026-10-08 (P0-T008 evidence): segmentation is a secondary lever
 (video-only R@5 0.545-0.818 across policies; overlap rejected with measured
@@ -369,6 +370,36 @@ discriminable; two-tone cuts exact). Recommendation A stands; no model swap,
 no threshold change. Still blocking M0 GO only.
 ```
 
+```text
+ARQ-001 decision record 2026-10-09 (architect, provisional — Option A):
+Continue with EmbeddingGemma 2 and investigate hybrid/modality-aware
+retrieval. Corrected-evaluation basis: P0 integrity rework (strict-vs-
+tolerant sensitivity, file-grouped metrics, byte-split index accounting,
+4-part key + reporting fixes; 75 benchmark unit tests green; independent
+metric review: no blocking defects).
+- The original 0.677 Recall@5 gate miss (tolerant policy, @768-d, 31-query
+  curated suite) remains valid as historically measured: the pre-rework
+  report is preserved byte-identically
+  (docs/benchmarks/retrieval-v1-results.historical.json) and the v2 report
+  reproduces it per query.
+- M0 GO remains BLOCKED. This corrective task does not constitute a new M0
+  gate approval and starts no fusion implementation.
+- Segmentation policy (fixed 2 s windows, seg-v1) remains provisional and
+  reversible: segment-Recall orderings reverse under strict scoring
+  (halves mixed 0.818 vs w2 0.682), file-grouped ties (0.818), so no
+  segmentation superiority is claimed.
+- Fusion (per-modality score normalization / RRF per PLAN section 9) and
+  evaluation methodology (tolerance-denominator effects, file-grouped
+  comparisons, single-relevant judgment narrowness) need further
+  investigation before any model decision.
+- Model replacement is not justified by current evidence (P0-T004/P0-T005
+  visual discrimination holds; scene strict video-only 1.000 and full
+  file-level 1.000 show representation is not the blocker).
+- No roadmap change: P0-T009 remains the current task (not started here);
+  no P1/fusion work begins under this entry.
+Blocking: yes for M0 GO; no for P0-T009..P0-T011.
+```
+
 ## Project State (source of truth)
 
 - **Current Phase:** Phase 0 — feasibility
@@ -377,6 +408,6 @@ no threshold change. Still blocking M0 GO only.
 - **Last Completed Task:** P0-T008 — Video segmentation policy comparison (2026-10-08; w2 default seg-v1, overlap rejected, hybrid measured inferior, review corrections applied)
 - **Blocked Tasks:** None recorded (Phase 0 dependencies deliberately pending)
 - **Known Blockers:** Windows runtime compatibility, retrieval quality, packaging and license obligations must be verified in Phase 0; these are *research gates*, not known failures.
-- **Architecture Review Queue:** ARQ-001 open (P0-T007 gate miss → PIVOT-SIGNAL; M0 GO blocked pending review)
+- **Architecture Review Queue:** ARQ-001 decided provisional Option A (2026-10-09; M0 GO still blocked, P0-T009..T011 unblocked)
 - **New Risks:** See PLAN.md §14; add discoveries with risk ID.
-- **Last Documentation Review:** 2026-10-08 (P0-T008 measured incl. independent review; ARQ-001 updated, still open; no product code exists)
+- **Last Documentation Review:** 2026-10-09 (P0 integrity rework: strict/tolerant sensitivity, file-grouped reporting, byte-split index accounting, 4-part key fixes, segmentation corrections; ARQ-001 Option A recorded; no product code exists; P0-T009 not started)

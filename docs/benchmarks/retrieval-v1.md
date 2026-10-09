@@ -98,3 +98,59 @@ go/no-go needs the ARQ-001 review; P0-T008 (segmentation) and P0-T009
 - Halves-only segments; thirds/overlaps unevaluated (P0-T008).
 - CPU fp32 only; bf16/GPU paths per P0-T006 findings.
 - Single run; timings are smoke readings, not p95 claims.
+
+## Sensitivity addendum (P0 integrity rework, 2026-10-09, report v2)
+
+Judgments and the 0.75 gate are unchanged; every figure above reproduces
+exactly under the **tolerant (original) policy** (verified per-query).
+Machine-readable v2 results: `docs/benchmarks/retrieval-v1-results.json`
+(`report_version` 2); the pre-rework file is preserved byte-identically as
+`retrieval-v1-results.historical.json`.
+
+### Strict-vs-tolerant temporal relevance (visual suite, pool 140)
+
+| Dim | Tolerant seg R@5 / file R@5 | Strict seg R@5 / file R@5 | Rel units mean (tol / strict) |
+|---|---|---|---|
+| 768 | 0.677 / 0.790 | 0.790 / 0.790 | 1.42 / 1.16 |
+| 512 | 0.645 / 0.758 | 0.758 / 0.758 | 1.42 / 1.16 |
+| 256 | 0.645 / 0.758 | 0.758 / 0.758 | 1.42 / 1.16 |
+| 128 | 0.565 / 0.694 | 0.677 / 0.694 | 1.42 / 1.16 |
+
+How tolerance moves the denominator: on seam-aligned halves, tolerance
+marks *both* adjacent halves relevant (e.g. q021–q028: 2 tolerant units vs
+1 strict unit), so tolerant segment Recall is systematically lower while
+file-grouped recall is identical under both policies. Per-query
+`tolerant_n` / `strict_n` / `relevant_files` are stored in
+`per_query[<qid>][<dim>]`; the gate verdict stays on the tolerant policy
+(`verdict_policy`).
+
+### Timestamp error (tolerant hits only, video-visual queries)
+
+| Dim | Mean (ms) | Hits / queries | Miss rate |
+|---|---|---|---|
+| 768 | 708.3 | 6 / 11 | 0.455 |
+| 512 | 500.0 | 6 / 11 | 0.455 |
+| 256 | 600.0 | 5 / 11 | 0.545 |
+| 128 | 750.0 | 4 / 11 | 0.636 |
+
+Misses are counted in Recall, not in the mean — hence both figures.
+
+### Index accounting correction
+
+v1 reported 596,578 bytes / 4.3 KB per unit as a lumped figure. Split
+(v2 `index` block): **candidate-vector bytes 466,920** (the served index:
+`image.npz` + `video.npz`) vs **query-vector bytes 129,658**
+(evaluation-only). Served-index density is **~3.3 KB per candidate unit**;
+`bytes` / `bytes_per_unit` keep the legacy lumped totals for v1
+comparability — cite `bytes_per_candidate_unit` for the index.
+
+### Robustness fixes shipped with v2
+
+- 3-part and 4-part (`video:{aid}:{strategy}:{s}-{e}`) unit keys parse via
+  one typed helper (`E_UNITKEY` on malformed input); the filename baseline
+  no longer crashes on strategy keys (bare-unpack `ValueError` removed).
+- Ranking/tie-breaking still deterministic (`-cos`, key); compat gates for
+  model revision, dimension, normalization and storage format preserved.
+- 24 new regression tests (strict/tolerant seams, multi-relevant credit,
+  file grouping, 4-part keys, determinism, byte accounting, denominators,
+  miss rates); 50/50 `test_evaluate` + 22/22 `test_segments` green.

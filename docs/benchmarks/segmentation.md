@@ -3,9 +3,17 @@
 **Status (2026-10-08): MEASURED.** Six strategies + keyframe baseline ran on
 the same 11 video queries (visual class; q032 excluded as in P0-T007),
 judgments, model (`eg2@914f7f8`, fp32 CPU, offline), and 1-FPS sampling.
-A baseline policy/version is selected below as a *documented initial
-default*, not a production commitment. Gate threshold untouched; no model
-swap; M0 still pending ARQ-001 review.
+
+**Integrity rework (2026-10-09, report v2):** strict-vs-tolerant temporal
+sensitivity added; per-query relevant-unit counts, pool sizes, file-grouped
+metrics, timestamp miss rates, and candidate/query byte split reported in
+`segmentation-results.json` (report_version 2). The pre-rework report is
+preserved byte-identically as `segmentation-results.historical.json`;
+tolerant (original-judgment) values reproduce it exactly. Judgments and the
+0.75 gate are unchanged. A baseline policy/version is selected below as a
+*provisional, reversible default*, not a proven optimum or production
+commitment. Gate threshold untouched; no model swap; M0 still pending
+ARQ-001 review (Option A decision recorded in STEPS.md).
 
 ## Strategies (policy `seg-v1`, `benchmarks/segments.py`, 22 unit tests)
 
@@ -32,6 +40,11 @@ segment. Scene is testable here *for hard cuts only*.
 
 ## Quality @768-d (video queries, n=11)
 
+All seg_*/file_* values below are the **tolerant (original-judgment)**
+policy, reproducing the pre-rework report exactly. Strict twins live in
+`sensitivity_strict` per pool in `segmentation-results.json` — see the
+sensitivity section; do not cite segment Recall as file-retrieval evidence.
+
 | Strategy | Pool | seg R@1 / R@5 / MRR | file R@5 / MRR | top-1 time err (n) | dup-top5 |
 |---|---|---|---|---|---|
 | halves | mixed | 0.273 / 0.500 / 0.667 | 0.818 / 0.682 | 708 ms (6) | 5 |
@@ -49,12 +62,31 @@ segment. Scene is testable here *for hard cuts only*.
 | keyframe | mixed | 0.091 / 0.364 / 0.172 | — | — | — |
 
 Reading (all on n=11 — wide confidence intervals; no overclaiming):
+- **Segment-level Recall is NOT comparable across strategies** (correction
+  applied 2026-10-09): candidate pools range 26–93 units and per-query
+  relevant-unit counts differ by strategy *and* by temporal policy, so
+  segment Recall@5 denominators are incomparable. **File-grouped recall is
+  the file-retrieval comparison metric** (denominator: one entry per
+  relevant file under any policy). By that metric, halves/w2/w2ov50 tie on
+  the mixed pool (0.818) and halves reaches 1.000 video-only.
+- **Tolerance sensitivity reverses apparent orderings.** Strict
+  (zero-tolerance) segment Recall@5: halves mixed **0.818** (vs 0.500
+  tolerant), w2 0.682 (=), w2ov50 0.652 (vs 0.508), scene 0.727 (vs 0.591),
+  scenew2 0.682 (vs 0.591), full 0.727 (=); video-only strict: halves 0.864,
+  w2 0.758, scene **1.000**. The tolerant halves figure is depressed because
+  tolerance marks *both* halves relevant at seam-aligned boundaries
+  (denominator 2 instead of 1), while w2 windows cut inside expectations
+  (denominator 2 under both policies). File-grouped recall is policy-stable
+  (halves mixed 0.818 both policies). Any claim of the form "strategy X
+  segments better than Y" from segment Recall alone is therefore withdrawn;
+  the measurements stand, the comparison method was at fault.
 - **Overlap rejected:** w2ov50 underperforms w2 in both pools (video-only
   0.576 vs 0.758) at 1.6× units with heavy duplicate top-5 occupancy.
   One (window, stride) point tested; no benefit → no overlap (PLAN §8 rule).
-- **Scene has the best per-unit quality** (video-only 0.818/0.882, time err
-  667 ms, 26 units, dup≈0) but an **unbounded worst case** (statics → one
-  vector) and hard-cut-only evidence.
+- **Scene has the best per-unit quality under both policies** (video-only
+  tolerant 0.818/0.882, strict 1.000; time err 667 ms, 26 units, dup≈0) but
+  an **unbounded worst case** (statics → one vector) and hard-cut-only
+  evidence.
 - **Full ranks files perfectly (1.000) yet localizes nothing** (time err
   ~1071 ms): file retrieval without timestamps. The anti-baseline behaves
   exactly as R-08 predicts — segments exist for moments, not files.
@@ -62,8 +94,8 @@ Reading (all on n=11 — wide confidence intervals; no overclaiming):
   0.818 and < w2 0.758): fallback units add crowding without adding
   discrimination on this suite. The pre-registered "scene+w2" guess was
   wrong; the measurement stands.
-- **File-grouped ≫ segment-level** everywhere (halves video-only 1.000 vs
-  0.545): production ranking must group by file (PLAN §9).
+- **File-grouped ≫ segment-level** in the tolerant view (halves video-only
+  1.000 vs 0.545): production ranking must group by file (PLAN §9).
 - **Mixed < video-only** in every strategy: cross-modal crowding
   reconfirmed (ARQ-001 cause #1). Keyframe worst (0.364).
 
@@ -85,20 +117,27 @@ encode cost is therefore reported as an **observed 3–10 s range (CPU fp32),
 not a precise per-strategy ranking** — run-to-run host variance exceeds
 the between-strategy differences for equal-length inputs. Longer spans
 cost more (more sampled frames), all else equal. Storage scales linearly:
-~3.4 kB/unit float32 @768-d (decimal kB). Retrieval-only latency this run:
+~3.4 kB/unit float32 @768-d (decimal kB) of **candidate-vector bytes**
+(`candidate_pool_bytes_mixed` per strategy in the v2 report; the served
+index excludes `query_bytes`, which are evaluation-only — v1 lumped both).
+Retrieval-only latency this run:
 11.2 ms mean over 132 rankings (mixed + video-only pools).
 
-## Baseline policy decision (documented initial default)
+## Baseline policy decision (provisional, reversible default)
 
-**Fixed 2 s windows (`w2`), version `seg-v1`.** Rationale, all measured:
-best uniform-policy quality (video-only 0.758/0.803), bounded worst case
-(short clips → one span; long clips → duration/2 units), deterministic,
-simplest to schedule. Scene cuts stay a documented *refinement* (best
-per-unit numbers where hard cuts exist) pending real-footage proof and a
-boundedness rule; the measured hybrid is not adopted since it underperforms
-both parents here. Overlapping windows rejected; full-clip rejected except
-as a baseline. Revisit after P1 ranker work — narrow synthetic evidence,
-stated as such.
+**Fixed 2 s windows (`w2`), version `seg-v1`.** Rationale, all measured —
+and explicitly NOT a segment-Recall superiority claim (corrected
+2026-10-09: tolerant segment Recall favors w2 over halves 0.682 vs 0.500,
+strict reverses it 0.682 vs 0.818, file-grouped ties 0.818): bounded worst
+case (short clips → one span; long clips → duration/2 units),
+deterministic, simplest to schedule, file-grouped parity with every
+uniform policy on this suite. Scene cuts stay a documented *refinement*
+(best per-unit numbers where hard cuts exist, strict 1.000 video-only)
+pending real-footage proof and a boundedness rule; the measured hybrid is
+not adopted since it underperforms both parents here. Overlapping windows
+rejected; full-clip rejected except as a baseline. Revisit after P1 ranker
+work — narrow synthetic evidence, stated as such. This default may be
+reversed by later evidence without migration (no production index exists).
 
 Rejected variants: none for bounds violations — all spans validated
 0 ≤ s < e ≤ duration (integer ms) by `segments.py`, out-of-range scene cuts
@@ -133,3 +172,9 @@ count vs graded mean — both reported, consistent.
 - Overlap tested at one (window, stride) point; scene threshold at one value.
 - Timings are single-run smoke readings with large host variance, not p95.
 - Threshold, model, and judgments unchanged per integrity rules.
+- **Cross-strategy segment-Recall comparisons are methodologically
+  misleading** (pools 26–93 units; relevant counts policy- and
+  strategy-dependent): cite file-grouped recall for file retrieval and the
+  strict/tolerant pair for segment behavior. Timestamp means cover hits
+  only; miss rates (0.27–0.64 across strategies/pools) are reported
+  alongside in `segmentation-results.json`.

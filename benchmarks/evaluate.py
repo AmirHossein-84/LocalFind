@@ -12,7 +12,17 @@ Gate (PLAN section 2, FIXED): Recall@5 >= 0.75 on the curated visual suite.
 The verdict is recorded, never auto-acted upon; thresholds are not editable
 here (see check_gate in retrieval.py -- this script only reports).
 
-Usage: benchmarks/.venv/Scripts/python benchmarks/evaluate.py
+Report v2 (P0 integrity rework, judgments + gate unchanged):
+  - strict-vs-tolerant temporal sensitivity on the visual suite
+    (segment-level AND file-grouped, per-query relevant counts);
+  - candidate pool sizes, file-grouped visual metrics, top-1 timestamp
+    error with hit count + miss rate, and explicit cross-comparison limits;
+  - index accounting split into candidate-vector bytes vs query-vector
+    bytes (v1 lumped both into one figure);
+  - pre-write preservation: an existing report without report_version 2 is
+    copied to a .historical.json backup (once) instead of silently lost.
+
+Usage: benchmarks/.venv/Scripts/python benchmarks/evaluate.py [--out PATH]
 Exit 0 = benchmark completed (even on gate miss); 1 = crash/malformed input.
 """
 
@@ -26,8 +36,11 @@ from pathlib import Path
 from compat import (check_space_compatible, check_vector_values, make_sig,
                       truncate_renorm)
 from local_model import REVISION
-from retrieval import (EvaluationGateError, check_gate, mrr_at, rank_candidates,
-                       recall_at_k, segment_matches)
+from retrieval import (EvaluationGateError, check_gate, group_rank_by_file,
+                       mrr_at, parse_unit_key, rank_candidates, recall_at_k,
+                       segment_matches_with_policy, top1_time_error)
+
+REPORT_VERSION = 2
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VEC_DIR = REPO_ROOT / "benchmarks" / "corpus" / "vectors"
@@ -86,6 +99,18 @@ def relevant_unit_keys(query, assets, video_keys):
     same-asset halves overlapping [start-tol, end+tol]. Cross-asset leakage
     is a recalled P0-T007 bug -- covered by test_evaluate.py.
     """
+    return relevant_unit_keys_policy(query, assets, video_keys, policy="tolerant")
+
+
+def relevant_unit_keys_policy(query, assets, video_keys, policy="tolerant"):
+    """Policy-aware relevant units (grade>=1).
+
+    "tolerant" reproduces the original judgments exactly (expected interval
+    expanded by tolerance_ms); "strict" forces zero tolerance so adjacent
+    segments sharing only an edge do NOT count. Unknown policies raise
+    E_POLICY via segment_matches_with_policy. Image handling is identical
+    under both policies (no timestamps involved).
+    """
     rel = []
     for exp in query.get("expected", []):
         if exp.get("grade", 2) < 1:
@@ -97,14 +122,110 @@ def relevant_unit_keys(query, assets, video_keys):
             for key in video_keys:
                 # Key forms: "video:{aid}:{s}-{e}" (halves) or
                 # "video:{aid}:{strategy}:{s}-{e}" (P0-T008 strategies).
-                parts = key.split(":")
-                unit_aid, span = parts[1], parts[-1]
-                s, e = (int(x) for x in span.split("-"))
-                if segment_matches({**exp, "asset_id": aid},
-                                   {"asset_id": unit_aid,
-                                    "start_ms": s, "end_ms": e}):
+                parsed = parse_unit_key(key)
+                if parsed["kind"] != "video":
+                    raise ValueError(f"E_UNITKEY: expected video key, got {key!r}")
+                unit_aid, s, e = (parsed["asset_id"], parsed["start_ms"],
+                                  parsed["end_ms"])
+                if segment_matches_with_policy(
+                        {**exp, "asset_id": aid},
+                        {"asset_id": unit_aid, "start_ms": s, "end_ms": e},
+                        policy):
                     rel.append((key, exp.get("grade", 2)))
     return rel
+
+
+def relevant_file_assets(query, assets):
+    """Sorted relevant file asset ids for a query (grade>=1, file-grouped).
+
+    File-grouped denominators are strategy-independent (one entry per file),
+    unlike segment-level denominators which grow with finer segmentation.
+    """
+    files = set()
+    for exp in query.get("expected", []):
+        if exp.get("grade", 2) >= 1:
+            files.add(exp["asset_id"])
+    return sorted(files)
+
+
+def filename_score_for_key(query_text, unit_key, assets):
+    """Filename-token overlap for any image/video/keyframe unit key.
+
+    Supports 3-part ("video:{aid}:{s}-{e}") and 4-part
+    ("video:{aid}:{strategy}:{s}-{e}") video keys via parse_unit_key;
+    malformed keys raise E_UNITKEY (typed, never a bare unpack error).
+    """
+    toks = re.findall(r"[a-z0-9]+", query_text.lower())
+    if not toks:
+        return 0.0
+    parsed = parse_unit_key(unit_key)
+    if parsed["kind"] == "query":
+        raise ValueError(f"E_UNITKEY: query key {unit_key!r} is not a candidate")
+    stem = assets[parsed["asset_id"]]["rel_path"].lower()
+    stem = stem.rsplit("/", 1)[-1]
+    return sum(1 for t in toks if t in stem) / len(toks)
+
+
+def index_size_report(vec_dir):
+    """Split stored bytes into candidate-vector vs query-vector bytes.
+
+    v1 reported a single lumped figure (candidates + queries); v2 reports
+    each side separately so bytes/unit reflects the served candidate index.
+    Returns a dict with candidate/query/total bytes + unit counts.
+    """
+    cand_files = [vec_dir / "image.npz", vec_dir / "video.npz"]
+    cand_bytes = sum(p.stat().st_size for p in cand_files)
+    query_bytes = (vec_dir / "query.npz").stat().st_size
+    return {"candidate_bytes": cand_bytes, "query_bytes": query_bytes,
+            "total_bytes": cand_bytes + query_bytes}
+
+
+def preserve_historical_report(out_path):
+    """Copy a pre-v2 report to a .historical.json backup (once, not silent).
+
+    Returns the parsed historical doc (or None). Never raises: preservation
+    is best-effort and must not break the benchmark run itself.
+    """
+    return _read_report_for_history(out_path, create_backup=True)
+
+
+def load_historical_backup(out_path):
+    """Parse the frozen .historical.json backup beside out_path (or None).
+
+    The backup is the byte-identical pre-rework report; the live `historical`
+    section is always derived from it so reruns are stable.
+    """
+    backup = out_path.with_name(out_path.stem + ".historical.json")
+    try:
+        if backup.is_file():
+            old = json.loads(backup.read_bytes().decode("utf-8"))
+            return old if isinstance(old, dict) else None
+    except (OSError, ValueError):
+        return None
+    return None
+
+
+def _read_report_for_history(out_path, create_backup):
+    try:
+        if not out_path.is_file():
+            return None
+        raw = out_path.read_bytes()
+        try:
+            old = json.loads(raw.decode("utf-8"))
+        except ValueError:
+            return None
+        if isinstance(old, dict) and old.get("report_version") == REPORT_VERSION:
+            return old
+        if create_backup:
+            backup = out_path.with_name(out_path.stem + ".historical.json")
+            if not backup.is_file():
+                # Byte-identical copy: history must reproduce the original
+                # file exactly (a json round-trip is not byte-stable).
+                backup.write_bytes(raw)
+                print(f"preserved historical report -> {backup}")
+        return old if isinstance(old, dict) else None
+    except OSError:
+        return None
 
 
 def main(argv=None):
@@ -170,25 +291,40 @@ def main(argv=None):
         return relevant_unit_keys(query, assets, video_keys)
 
     def filename_score(query_text, unit_key):
-        toks = re.findall(r"[a-z0-9]+", query_text.lower())
-        if not toks:
-            return 0.0
-        if unit_key.startswith("image:"):
-            stem = assets[unit_key.split(":")[1]]["rel_path"].lower()
-        else:
-            _p, _a, _s = unit_key.split(":")
-            stem = assets[_a]["rel_path"].lower()
-        stem = stem.rsplit("/", 1)[-1]
-        return sum(1 for t in toks if t in stem) / len(toks)
+        # 3-part and 4-part video keys supported via the shared helper
+        # (bare unpack of split(":") crashed on strategy keys -- fixed).
+        return filename_score_for_key(query_text, unit_key, assets)
 
     rng = random.Random(42)
-    results = {"corpus_id": corpus["corpus_id"], "corpus_version": corpus["version"],
+    results = {"report_version": REPORT_VERSION,
+               "corpus_id": corpus["corpus_id"], "corpus_version": corpus["version"],
                "query_set_id": queries_doc["query_set_id"],
                "query_version": queries_doc["version"],
                "model_id": manifest["model_id"], "revision": manifest["revision"],
                "torch_dtype": manifest["torch_dtype"], "dims": list(DIMS),
                "gate_recall5": GATE_RECALL5, "by_dim": {}, "baselines": {},
-               "per_query": {}, "negatives": {}}
+               "per_query": {}, "negatives": {},
+               "temporal_policies": {
+                   "tolerant": "original judgments: expected interval "
+                               "expanded by tolerance_ms both sides "
+                               "(bridges adjacent-segment seams by design)",
+                   "strict": "sensitivity only: zero-tolerance overlap "
+                             "(adjacent edge-sharing segments do NOT match)"},
+               "candidate_pool": {"n_units": len(all_keys),
+                                  "n_images": len(image_keys),
+                                  "n_video_segments": len(video_keys)},
+               "limitations": [
+                   "Segment-level Recall denominators depend on the "
+                   "temporal policy AND the segmentation: finer policies "
+                   "yield more relevant units per query. Do not rank "
+                   "strategies by raw segment Recall alone; use "
+                   "file-grouped metrics for file-retrieval comparisons.",
+                   "Tolerant matching marks adjacent video segments "
+                   "relevant when tolerance bridges the seam (e.g. halves "
+                   "at the expected boundary): relevant-unit counts differ "
+                   "strict vs tolerant and are reported per query.",
+                   "Synthetic corpus; single run; retrieval-only latency "
+                   "is not a p95 claim."]} 
     lat = []
     for dim in DIMS:
         tvec = {k: truncate_renorm([float(v) for v in store[k]], dim) for k in store}
@@ -217,14 +353,21 @@ def main(argv=None):
                     err = {"missed_units": missed,
                            "expected_grades": {k: g for k, g in rel}}
                 qid = q["query_id"]
+                strict_rel = relevant_unit_keys_policy(q, assets, video_keys,
+                                                       policy="strict")
                 results["per_query"].setdefault(qid, {})[str(dim)] = {
                     "recall@1": r1, "recall@5": r5, "mrr@10": m,
-                    "top5": top, "error": err}
+                    "top5": top, "error": err,
+                    "pool_size": len(all_keys),
+                    "relevant_tolerant_n": len(rel_keys),
+                    "relevant_strict_n": len(strict_rel),
+                    "relevant_files": relevant_file_assets(q, assets)}
                 if err:
                     errs.append({"query_id": qid, "text": q["text"], **err})
             n = len(cls_q)
             dim_res["classes"][cls] = {
-                "n": n, "recall@1": sum(rec1) / n, "recall@5": sum(rec5) / n,
+                "n": n, "pool_size": len(all_keys),
+                "recall@1": sum(rec1) / n, "recall@5": sum(rec5) / n,
                 "mrr@10": sum(mrr) / n, "errors": errs} if n else {"n": 0}
         for mod, mod_q, pool in (
                 ("image", [q for q in queries
@@ -244,8 +387,73 @@ def main(argv=None):
                 mrr.append(mrr_at(rel_keys, keys, 10))
             n = len(mod_q)
             dim_res["modalities"][mod] = {
-                "n": n, "recall@1": sum(rec1) / n, "recall@5": sum(rec5) / n,
+                "n": n, "pool_size": len(pool),
+                "recall@1": sum(rec1) / n, "recall@5": sum(rec5) / n,
                 "mrr@10": sum(mrr) / n} if n else {"n": 0}
+        # Strict-vs-tolerant sensitivity on the visual suite (same rankings
+        # re-scored under both temporal policies) + file-grouped metrics.
+        # The gate verdict always uses the tolerant (original) policy.
+        vis_q = [q for q in queries if q["query_class"] == "visual"]
+        sens = {}
+        for policy in ("tolerant", "strict"):
+            s1, s5, sm, f1, f5, fm = [], [], [], [], [], []
+            for q in vis_q:
+                rel_keys = [k for k, _g in relevant_unit_keys_policy(
+                    q, assets, video_keys, policy=policy)]
+                ranked = rank_candidates(tvec[query_keys[q["query_id"]]],
+                                         [(k, tvec[k]) for k in all_keys])
+                keys = [k for k, _s in ranked]
+                s1.append(recall_at_k(rel_keys, keys, 1))
+                s5.append(recall_at_k(rel_keys, keys, 5))
+                sm.append(mrr_at(rel_keys, keys, 10))
+                rel_files = relevant_file_assets(q, assets)
+                file_rank = group_rank_by_file(ranked)
+                f1.append(recall_at_k(rel_files, file_rank, 1))
+                f5.append(recall_at_k(rel_files, file_rank, 5))
+                fm.append(mrr_at(rel_files, file_rank, 10))
+            nv = len(vis_q)
+            sens[policy] = {
+                "n": nv, "pool_size": len(all_keys),
+                "seg_recall@1": sum(s1) / nv, "seg_recall@5": sum(s5) / nv,
+                "seg_mrr@10": sum(sm) / nv,
+                "file_recall@1": sum(f1) / nv,
+                "file_recall@5": sum(f5) / nv, "file_mrr@10": sum(fm) / nv}
+        tol_counts = [len(relevant_unit_keys_policy(q, assets, video_keys,
+                                                    policy="tolerant"))
+                      for q in vis_q]
+        str_counts = [len(relevant_unit_keys_policy(q, assets, video_keys,
+                                                    policy="strict"))
+                      for q in vis_q]
+        sens["relevant_units"] = {
+            "per_query_tolerant_n": {q["query_id"]: c for q, c in
+                                     zip(vis_q, tol_counts)},
+            "per_query_strict_n": {q["query_id"]: c for q, c in
+                                   zip(vis_q, str_counts)},
+            "mean_tolerant_n": sum(tol_counts) / len(tol_counts),
+            "mean_strict_n": sum(str_counts) / len(str_counts),
+            "note": "tolerance bridges adjacent-segment seams, so "
+                    "tolerant counts >= strict counts on seam-aligned "
+                    "policies (e.g. halves); the Recall denominator moves "
+                    "with the policy"}
+        dim_res["sensitivity"] = sens
+        # Top-1 timestamp error over video-visual queries (tolerant hits
+        # only) with sample count AND miss rate (misses live in Recall).
+        vid_q = [q for q in vis_q if q["modality"] == "video"]
+        terr, thits = [], 0
+        for q in vid_q:
+            ranked = rank_candidates(tvec[query_keys[q["query_id"]]],
+                                     [(k, tvec[k]) for k in all_keys])
+            err_ms = top1_time_error(q, ranked[0][0], assets,
+                                     policy="tolerant")
+            if err_ms is not None:
+                terr.append(err_ms)
+                thits += 1
+        dim_res["timestamp_tolerant"] = {
+            "n_queries": len(vid_q), "n_hits": thits,
+            "misses": len(vid_q) - thits,
+            "miss_rate": (len(vid_q) - thits) / len(vid_q) if vid_q else None,
+            "top1_time_err_ms_mean": (sum(terr) / len(terr)) if terr else None,
+            "temporal_policy": "tolerant"}
         # Negatives: calibration only (no threshold exists) -- top-1 cosine stats.
         neg_q = [q for q in queries if q["query_class"] == "negative"]
         top1 = []
@@ -299,7 +507,8 @@ def main(argv=None):
             rec5.append(recall_at_k(rel_keys, scored, 5))
             mrr.append(mrr_at(rel_keys, scored, 10))
         n = len(vis_q)
-        results["baselines"][name] = {"n": n, "recall@1": sum(rec1) / n,
+        results["baselines"][name] = {"n": n, "pool_size": len(order),
+                                      "recall@1": sum(rec1) / n,
                                       "recall@5": sum(rec5) / n,
                                       "mrr@10": sum(mrr) / n}
     gate_val = results["by_dim"]["768"]["classes"]["visual"]["recall@5"]
@@ -309,11 +518,34 @@ def main(argv=None):
     except EvaluationGateError as exc:
         verdict = f"PIVOT-SIGNAL ({exc})"
     results["verdict"] = verdict
+    results["verdict_policy"] = ("tolerant (original judgments); strict is "
+                                 "sensitivity-only, see by_dim[*][sensitivity]")
     results["latency"] = {"retrieval_only_mean_s": sum(lat) / len(lat),
                           "n_rankings": len(lat)}
-    index_bytes = sum((VEC_DIR / f"{m}.npz").stat().st_size for m in ("image", "video", "query"))
-    results["index"] = {"bytes": index_bytes, "n_units": len(all_keys),
-                        "bytes_per_unit": index_bytes / len(all_keys)}
+    # v2 index accounting: candidate-vector bytes (the served index) split
+    # from query-vector bytes (evaluation-only). "bytes" keeps the legacy
+    # lumped total so v1 readers still find their field.
+    size = index_size_report(VEC_DIR)
+    results["index"] = {"bytes": size["total_bytes"],
+                        "candidate_bytes": size["candidate_bytes"],
+                        "query_bytes": size["query_bytes"],
+                        "n_units": len(all_keys),
+                        "bytes_per_unit": size["total_bytes"] / len(all_keys),
+                        "bytes_per_candidate_unit":
+                            size["candidate_bytes"] / len(all_keys),
+                        "note": "bytes_per_candidate_unit is the served-index "
+                                "figure; bytes/bytes_per_unit are legacy "
+                                "lumped totals kept for v1 comparability"}
+    historical = preserve_historical_report(args.out)
+    frozen = load_historical_backup(args.out) or historical
+    if frozen:
+        results["historical"] = {
+            "verdict": frozen.get("verdict"),
+            "visual_recall5_768": {
+                "value": (frozen.get("by_dim", {})
+                          .get("768", {}).get("classes", {})
+                          .get("visual", {}).get("recall@5")),
+                "note": "pre-rework measurement, tolerant policy, gate 0.75"}}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
 
@@ -322,15 +554,29 @@ def main(argv=None):
           f"units={len(all_keys)}")
     for dim in DIMS:
         c = results["by_dim"][str(dim)]["classes"]["visual"]
-        print(f"dim {dim}: visual(n={c['n']}) R@1={c['recall@1']:.3f} "
+        s = results["by_dim"][str(dim)]["sensitivity"]
+        t = results["by_dim"][str(dim)]["timestamp_tolerant"]
+        print(f"dim {dim}: visual(n={c['n']},pool={c['pool_size']}) "
+              f"R@1={c['recall@1']:.3f} "
               f"R@5={c['recall@5']:.3f} MRR@10={c['mrr@10']:.3f} "
               f"errors={len(c['errors'])}")
+        print(f"  sensitivity: tolerant segR@5={s['tolerant']['seg_recall@5']:.3f} "
+              f"fileR@5={s['tolerant']['file_recall@5']:.3f} | strict "
+              f"segR@5={s['strict']['seg_recall@5']:.3f} "
+              f"fileR@5={s['strict']['file_recall@5']:.3f} "
+              f"(rel units mean {s['relevant_units']['mean_tolerant_n']:.2f} "
+              f"vs {s['relevant_units']['mean_strict_n']:.2f})")
+        print(f"  timestamp(tolerant): mean={t['top1_time_err_ms_mean']}ms "
+              f"hits={t['n_hits']}/{t['n_queries']} "
+              f"miss_rate={t['miss_rate']:.3f}" if t["miss_rate"] is not None
+              else "  timestamp(tolerant): no hits")
     for name, b in results["baselines"].items():
         print(f"baseline {name}: R@1={b['recall@1']:.3f} R@5={b['recall@5']:.3f} "
-              f"MRR@10={b['mrr@10']:.3f}")
+              f"MRR@10={b['mrr@10']:.3f} (pool={b['pool_size']})")
     print(f"gate Recall@5>=0.75 @768 visual: {gate_val:.3f} -> {verdict}")
     print(f"retrieval-only latency mean={results['latency']['retrieval_only_mean_s']*1000:.1f}ms; "
-          f"index={index_bytes} bytes")
+          f"index candidates={size['candidate_bytes']}B "
+          f"queries={size['query_bytes']}B total={size['total_bytes']}B")
     print(f"results: {args.out}")
     print("EVALUATE PASS")
     return 0
