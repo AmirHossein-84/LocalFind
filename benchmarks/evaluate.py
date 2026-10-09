@@ -95,7 +95,10 @@ def relevant_unit_keys(query, assets, video_keys):
             rel.append((f"image:{aid}", exp.get("grade", 2)))
         else:
             for key in video_keys:
-                _p, unit_aid, span = key.split(":")
+                # Key forms: "video:{aid}:{s}-{e}" (halves) or
+                # "video:{aid}:{strategy}:{s}-{e}" (P0-T008 strategies).
+                parts = key.split(":")
+                unit_aid, span = parts[1], parts[-1]
                 s, e = (int(x) for x in span.split("-"))
                 if segment_matches({**exp, "asset_id": aid},
                                    {"asset_id": unit_aid,

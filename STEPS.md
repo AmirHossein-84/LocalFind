@@ -52,7 +52,7 @@
   - **Do:** Build an exact cosine retrieval prototype with labeled images and video segments; measure Recall@1/@5 and MRR@10 on ≥30 judged visual queries, with filename-only and keyframe baseline. Fix deterministic seed, corpus manifest and config.
   - **Done / prove:** reproducible report with per-query errors; proposed gate Recall@5 ≥0.75 on this *curated suite* or explicit PIVOT discussion. **Do not:** publish hand-picked successes as comprehensive quality claims.
 
-- [ ] **P0-T008 — Video segmentation policy comparison**
+- [x] **P0-T008 — Video segmentation policy comparison**
   - **Deps:** P0-T005, P0-T007. **Touch:** `benchmarks/segment_compare.py`, `docs/benchmarks/segmentation.md`.
   - **Do:** Compare candidate fixed windows (e.g., 6/12 seconds) with scene-aware splits; include static screen recording, motion-heavy and short clips. Capture number of units, encode cost, Recall@5 and timestamp error; decide baseline policy/version.
   - **Done / prove:** a documented and configurable initial policy; reject any variant that exceeds model input bounds or has unmapped timestamps.
@@ -355,19 +355,28 @@ Evidence: docs/benchmarks/retrieval-v1.md + retrieval-v1-results.json (P0-T007 e
 Current contract: PLAN.md section 2 (Recall@5 >= 0.75 gate; fail triggers investigation, not silent lowering) + R-08 (segment-level video).
 Options: A. Keep model, fix methodology first (per-modality score normalization/RRF per PLAN section 9, judgment revision for repeated colors, realistic filenames) then re-measure (low cost, no arch change). B. Change segmentation/model now (high cost, premature before fixing known measurement confounds).
 Recommendation: A -- the miss is measurement/fusion-dominated, not proof the model cannot retrieve (P0-T004/P0-T005 smokes show genuine visual discrimination).
-Impact: no migration; P0-T008/T009/T010/T011 proceed; M0 decision stays pending review.
-Blocking: no (for P0-T008..T011); yes for M0 GO.
+Impact: no migration; P0-T009/T010/T011 proceed; M0 decision stays pending review.
+Blocking: no (for P0-T009..T011); yes for M0 GO.
 Reviewer decision + date: pending
+
+Update 2026-10-08 (P0-T008 evidence): segmentation is a secondary lever
+(video-only R@5 0.545-0.818 across policies; overlap rejected with measured
+inferiority; scene best per-unit but hard-cut-only; measured scene+w2 hybrid
+underperforms both parents; full-clip ranks files 1.000 with ~1071 ms
+timestamp error). Ranking/fusion still dominates (file-grouping halves
+video-only 0.545 -> 1.000). Model representation not the blocker (halves
+discriminable; two-tone cuts exact). Recommendation A stands; no model swap,
+no threshold change. Still blocking M0 GO only.
 ```
 
 ## Project State (source of truth)
 
 - **Current Phase:** Phase 0 — feasibility
 - **Current Milestone:** M0 (pending)
-- **Current Task:** P0-T008 — Video segmentation policy comparison
-- **Last Completed Task:** P0-T007 — Retrieval-quality feasibility benchmark (2026-10-08; visual R@5 0.677 @768 vs 0.75 gate → PIVOT-SIGNAL ARQ-001; 27 unit tests green; keyframe baseline measured)
+- **Current Task:** P0-T009 — SQLite FTS + vector backend benchmark
+- **Last Completed Task:** P0-T008 — Video segmentation policy comparison (2026-10-08; w2 default seg-v1, overlap rejected, hybrid measured inferior, review corrections applied)
 - **Blocked Tasks:** None recorded (Phase 0 dependencies deliberately pending)
 - **Known Blockers:** Windows runtime compatibility, retrieval quality, packaging and license obligations must be verified in Phase 0; these are *research gates*, not known failures.
 - **Architecture Review Queue:** ARQ-001 open (P0-T007 gate miss → PIVOT-SIGNAL; M0 GO blocked pending review)
 - **New Risks:** See PLAN.md §14; add discoveries with risk ID.
-- **Last Documentation Review:** 2026-10-08 (P0-T007 measured incl. independent review; gate missed, ARQ-001 filed; no product code exists)
+- **Last Documentation Review:** 2026-10-08 (P0-T008 measured incl. independent review; ARQ-001 updated, still open; no product code exists)

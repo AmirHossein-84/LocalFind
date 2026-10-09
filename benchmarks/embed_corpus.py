@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""P0-T007 step 1: embed the P0-T003 corpus to a reusable native-768-d cache.
+"""P0-T007 step 1 (+P0-T008 strategies): embed the corpus to reusable 768-d cache.
 
 Writes benchmarks/corpus/vectors/{images,segments,queries}.npz (float32) plus
 vectors-manifest.json (unit keys, sigs, corpus/query-set versions). Truncation
-to 512/256/128 happens later in evaluate.py (post-hoc, no re-encoding).
+happens later in evaluate.py (post-hoc, no re-encoding).
 
 Split runs to fit modest hosts / tool timeouts:
     python benchmarks/embed_corpus.py --modality image   # 100 images
     python benchmarks/embed_corpus.py --modality video   # 20 clips x halves
     python benchmarks/embed_corpus.py --modality query   # 39 texts
+    # P0-T008: --strategy w2|w2ov50|scene|full (+ --shard i/n); keys for
+    # non-halves strategies carry a :strategy suffix (halves keys unchanged).
 --resume skips units already cached. Sequential inference only.
 
 Exit 0 = cached, 1 = failure with E_* code. Offline (HF_HUB_OFFLINE=1 safe).
@@ -16,6 +18,7 @@ Exit 0 = cached, 1 = failure with E_* code. Offline (HF_HUB_OFFLINE=1 safe).
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -25,6 +28,7 @@ from pathlib import Path
 
 from compat import check_vector_values, make_sig, sig_string
 from local_model import MODEL_ID, REVISION, resolve_model_source
+from segments import spans_for
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VEC_DIR = REPO_ROOT / "benchmarks" / "corpus" / "vectors"
@@ -50,10 +54,34 @@ def run_cmd(cmd, what):
     return proc
 
 
+def detect_scene_cuts(clip, threshold=0.4):
+    """Scene-cut timestamps (ms) via ffmpeg select/showinfo. Loud on failure."""
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-i", str(clip), "-filter:v",
+             f"select='gt(scene,{threshold})',showinfo", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=FFMPEG_TIMEOUT_S)
+    except FileNotFoundError:
+        fail("E_TOOL", "ffmpeg not on PATH")
+    except subprocess.TimeoutExpired:
+        fail("E_TIMEOUT", f"scene detection timed out: {clip.name}")
+    if proc.returncode != 0:
+        tail = (proc.stderr or "").strip().splitlines()[-3:]
+        fail("E_FFMPEG", f"scene detection failed on {clip.name}:\n" + "\n".join(tail))
+    cuts = sorted({int(round(float(m) * 1000))
+                   for m in re.findall(r"pts_time:([0-9.]+)", proc.stderr or "")})
+    return cuts
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="P0-T007 corpus embedder.")
     parser.add_argument("--modality", required=True,
-                        choices=["image", "video", "query", "keyframe"]) 
+                        choices=["image", "video", "query", "keyframe"])
+    parser.add_argument("--strategy", default="halves",
+                        choices=["halves", "w2", "w2ov50", "scene", "scenew2", "full"],
+                        help="Video segmentation policy (P0-T008; video only).")
+    parser.add_argument("--shard", default="1/1",
+                        help="Asset shard i/n for long runs (deterministic).") 
     parser.add_argument("--model-dir", default=None)
     parser.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     parser.add_argument("--resume", action="store_true")
@@ -75,6 +103,10 @@ def main(argv=None):
         load_arg, revision, source = resolve_model_source(args.model_dir)
     except FileNotFoundError as exc:
         fail("E_MODEL_DIR", str(exc))
+    if args.modality == "video" and args.strategy != "halves":
+        out_name = f"video_{args.strategy}.npz"
+    else:
+        out_name = f"{args.modality}.npz"
     t0 = time.perf_counter()
     try:
         model = SentenceTransformer(load_arg, revision=revision, device=args.device,
@@ -86,7 +118,7 @@ def main(argv=None):
     if any("float16" in str(p.dtype) for p in model.parameters()):
         fail("E_DTYPE", "float16 parameters present (card forbids fp16)")
 
-    out_path = VEC_DIR / f"{args.modality}.npz"
+    out_path = VEC_DIR / out_name
     manifest_path = VEC_DIR / "vectors-manifest.json"
     manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {
         "corpus_id": corpus["corpus_id"], "corpus_version": corpus["version"],
@@ -118,17 +150,32 @@ def main(argv=None):
                 print(f"  images {i+1}/{len(assets)}", flush=True)
     elif args.modality == "video":
         from transformers.video_utils import load_video
-        assets = [a for a in corpus["assets"] if a["modality"] == "video"]
-        sig = make_sig("video", 768, prep="p0t007-v1", segment="halves")
+        strategy = args.strategy
+        try:
+            shard_i, shard_n = (int(x) for x in args.shard.split("/"))
+            if not (1 <= shard_i <= shard_n):
+                raise ValueError("shard out of range")
+        except ValueError:
+            fail("E_ARGS", f"bad --shard {args.shard!r}, expected i/n with 1<=i<=n")
+        all_assets = [a for a in corpus["assets"] if a["modality"] == "video"]
+        assets = [a for idx, a in enumerate(all_assets) if idx % shard_n == shard_i - 1]
+        sig = make_sig("video", 768, prep="p0t008-v1", segment=strategy)
         workdir = Path(tempfile.mkdtemp(prefix="lf-embed-"))
         try:
             n = 0
             for asset in assets:
                 total = asset["duration_ms"]
-                bounds = [(0, total // 2), (total // 2, total)]
                 clip = REPO_ROOT / "benchmarks" / "corpus" / asset["rel_path"]
+                cuts = detect_scene_cuts(clip) if strategy in ("scene", "scenew2") else []
+                try:
+                    bounds = spans_for(strategy, total, cuts)
+                except ValueError as exc:
+                    fail("E_SEGMENTS", f"{asset['asset_id']}: {exc}")
                 for (s, e) in bounds:
-                    key = f"video:{asset['asset_id']}:{s}-{e}"
+                    if strategy == "halves":
+                        key = f"video:{asset['asset_id']}:{s}-{e}"
+                    else:
+                        key = f"video:{asset['asset_id']}:{strategy}:{s}-{e}"
                     if args.resume and key in cached:
                         vecs[key] = cached[key]
                         units[key] = manifest["units"].get(key, {})
@@ -141,6 +188,9 @@ def main(argv=None):
                     # NOTE: str path required at runtime (Path misread as frames).
                     frames, _m = load_video(str(seg), backend="pyav")
                     nf = int(frames.shape[0])
+                    if nf == 0:
+                        fail("E_DECODE", f"zero frames from {seg.name}")
+                    t0 = time.perf_counter()
                     emb = np.asarray(model.encode(
                         {"text": "<|video|>",
                          "video": {"array": frames,
@@ -148,13 +198,17 @@ def main(argv=None):
                                                       "total_num_frames": nf,
                                                       "frames_indices": list(range(nf))}}}),
                         dtype=np.float32)
+                    enc_s = time.perf_counter() - t0
                     check_vector_values([float(v) for v in emb], NATIVE_DIM)
                     vecs[key] = emb
                     units[key] = {"asset_id": asset["asset_id"], "start_ms": s,
-                                  "end_ms": e, "sig": sig_string(sig)}
+                                  "end_ms": e, "strategy": strategy,
+                                  "encode_s": enc_s, "sig": sig_string(sig)}
                     n += 1
                     if n % 10 == 0:
-                        print(f"  segments {n}/{len(assets)*2}", flush=True)
+                        print(f"  segments {n} ({strategy} shard {shard_i}/{shard_n})",
+                              flush=True)
+            print(f"  strategy={strategy} clips={len(assets)}", flush=True)
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
     else:
@@ -193,11 +247,14 @@ def main(argv=None):
                              "-ss", str(asset["duration_ms"] / 2000),
                              "-i", str(clip), "-frames:v", "1", str(frame)],
                             f"keyframe {asset['asset_id']}")
+                    t0 = time.perf_counter()
                     emb = np.asarray(model.encode(
                         PILImage.open(frame).convert("RGB")), dtype=np.float32)
+                    enc_s = time.perf_counter() - t0
                     check_vector_values([float(v) for v in emb], NATIVE_DIM)
                     vecs[key] = emb
-                    units[key] = {"asset_id": asset["asset_id"], "sig": sig_string(sig)}
+                    units[key] = {"asset_id": asset["asset_id"], "encode_s": enc_s,
+                                  "sig": sig_string(sig)}
                     if (i + 1) % 10 == 0:
                         print(f"  keyframes {i+1}/{len(assets)}", flush=True)
             finally:
@@ -205,6 +262,13 @@ def main(argv=None):
 
     manifest["units"].update(units)
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    if out_path.is_file():
+        # Merge with previous shards instead of overwriting (sharded runs).
+        import numpy as _np
+        with _np.load(out_path) as z:
+            merged = {k: z[k] for k in z.files}
+        merged.update(vecs)
+        vecs = merged
     np.savez(out_path, **vecs)
     print(f"cached {len(vecs)} {args.modality} vectors -> {out_path.name} "
           f"({out_path.stat().st_size} bytes)")
