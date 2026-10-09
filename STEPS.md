@@ -57,7 +57,7 @@
   - **Do:** Compare candidate fixed windows (e.g., 6/12 seconds) with scene-aware splits; include static screen recording, motion-heavy and short clips. Capture number of units, encode cost, Recall@5 and timestamp error; decide baseline policy/version.
   - **Done / prove:** a documented and configurable initial policy; reject any variant that exceeds model input bounds or has unmapped timestamps.
 
-- [ ] **P0-T009 — SQLite FTS + vector backend benchmark**
+- [x] **P0-T009 — SQLite FTS + vector backend benchmark**
   - **Deps:** P0-T002. **Touch:** `benchmarks/vector_bench/`, `docs/benchmarks/storage-search.md`.
   - **Do:** Prototype SQLite FTS5 for filename/path and float32 vector BLOB exact cosine search with stable query vectors; test synthetic 10k/50k/250k unit corpora. Compare at least one embedded accelerated candidate (e.g., sqlite-vec) if linear scan misses p95 budget. Record p50/p95 and disk size.
   - **Done / prove:** an evidence-based decision on V1 vector backend, transaction/rebuild behavior, Windows package compatibility and ranking parity. **Do not:** add a remote server for vector search.
@@ -404,10 +404,10 @@ Blocking: yes for M0 GO; no for P0-T009..P0-T011.
 
 - **Current Phase:** Phase 0 — feasibility
 - **Current Milestone:** M0 (pending)
-- **Current Task:** P0-T009 — SQLite FTS + vector backend benchmark
-- **Last Completed Task:** P0-T008 — Video segmentation policy comparison (2026-10-08; w2 default seg-v1, overlap rejected, hybrid measured inferior, review corrections applied)
+- **Current Task:** P0-T010 — Inference sidecar packaging spike
+- **Last Completed Task:** P0-T009 — SQLite FTS + vector backend benchmark (2026-10-09; exact BLOB + sqlite-vec 0.1.9 prototype, 10k/50k/250k + 256-d appendix, 28 correctness tests green, evidence in docs/benchmarks/storage-search.md; V1 recommendation recorded, no ADR accepted, M0 still blocked)
 - **Blocked Tasks:** None recorded (Phase 0 dependencies deliberately pending)
 - **Known Blockers:** Windows runtime compatibility, retrieval quality, packaging and license obligations must be verified in Phase 0; these are *research gates*, not known failures.
 - **Architecture Review Queue:** ARQ-001 decided provisional Option A (2026-10-09; M0 GO still blocked, P0-T009..T011 unblocked)
 - **New Risks:** See PLAN.md §14; add discoveries with risk ID.
-- **Last Documentation Review:** 2026-10-09 (P0 integrity rework: strict/tolerant sensitivity, file-grouped reporting, byte-split index accounting, 4-part key fixes, segmentation corrections; ARQ-001 Option A recorded; no product code exists; P0-T009 not started)
+- **Last Documentation Review:** 2026-10-09 (P0-T009: storage-search.md + results JSON with 768-d scales and 256-d appendix; benchmarks/vector_bench prototype + 28 tests; independent review findings B1–B5 fixed; M0 GO still blocked, P0-T010 ready)

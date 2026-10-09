@@ -1,0 +1,280 @@
+{
+  "task": "P0-T009",
+  "report_version": 1,
+  "env": {
+    "os": "win32",
+    "python": "3.12.10",
+    "sqlite": "3.49.1",
+    "numpy": "2.4.6",
+    "sqlite_vec": "sqlite-vec-py-0.1.9",
+    "sqlite_vec_dll": "C:\\Program Files\\Python312\\Lib\\site-packages\\sqlite_vec\\vec0.dll",
+    "sqlite_vec_dll_bytes": 289280,
+    "cpu_count": 16,
+    "free_ram_bytes": 2663882752,
+    "free_disk_bytes_workdir": 35362615296
+  },
+  "config": {
+    "scales": [
+      10000,
+      50000,
+      250000
+    ],
+    "dim": 768,
+    "queries": 200,
+    "topk": 10,
+    "seed": 42
+  },
+  "scales": {
+    "10000": {
+      "n": 10000,
+      "dim": 768,
+      "seed": 10042,
+      "topk": 10,
+      "n_query_samples": 200,
+      "exact_build_s": 0.30176309996750206,
+      "exact_counts": {
+        "files": 0,
+        "embeddings": 10000
+      },
+      "vec_build_s": 1.5877368000219576,
+      "vec_counts": {
+        "ids": 10000,
+        "vec_items": 10000
+      },
+      "exact_fetch_5x_p50_ms": 48.89999999431893,
+      "exact_fetch_5x_p95_ms": 49.22680000308901,
+      "exact_load_rows": 10000,
+      "exact_rank_only_p50_ms": 4.2027500458061695,
+      "exact_rank_only_p95_ms": 4.81452498352155,
+      "exact_e2e_n": 10,
+      "exact_e2e_p50_ms": 54.13159998715855,
+      "exact_e2e_p95_ms": 54.780464980285615,
+      "vector_budget_p95_ms": 750.0,
+      "exact_within_budget_e2e": true,
+      "exact_db_bytes": 41373696,
+      "exact_bytes_per_unit": 4137.3696,
+      "vec_p50_ms": 21.295500017004088,
+      "vec_p95_ms": 22.2191899723839,
+      "vec_within_budget": true,
+      "vec_recall_at_k_vs_exact_mean": 1.0,
+      "vec_recall_at_k_vs_exact_min": 1.0,
+      "vec_db_bytes": 32202752,
+      "vec_bytes_per_unit": 3220.2752,
+      "persistence_exact_repeats": true,
+      "persistence_vec_repeats": true,
+      "incr_insert_200_s": 0.005147900024894625,
+      "incr_delete_100_s": 0.0005892000044696033,
+      "incr_counts": {
+        "files": 0,
+        "embeddings": 10100
+      },
+      "incr_expected": 10100,
+      "incr_count_ok": true,
+      "incr_deleted_absent": true,
+      "status": "measured"
+    },
+    "50000": {
+      "n": 50000,
+      "dim": 768,
+      "seed": 50042,
+      "topk": 10,
+      "n_query_samples": 200,
+      "exact_build_s": 1.465109599987045,
+      "exact_counts": {
+        "files": 0,
+        "embeddings": 50000
+      },
+      "vec_build_s": 8.351934000034817,
+      "vec_counts": {
+        "ids": 50000,
+        "vec_items": 50000
+      },
+      "exact_fetch_5x_p50_ms": 247.4505000282079,
+      "exact_fetch_5x_p95_ms": 248.21865998674184,
+      "exact_load_rows": 50000,
+      "exact_rank_only_p50_ms": 24.471650016494095,
+      "exact_rank_only_p95_ms": 27.433320006821305,
+      "exact_e2e_n": 10,
+      "exact_e2e_p50_ms": 298.0030500330031,
+      "exact_e2e_p95_ms": 305.8378350280691,
+      "vector_budget_p95_ms": 750.0,
+      "exact_within_budget_e2e": true,
+      "exact_db_bytes": 206704640,
+      "exact_bytes_per_unit": 4134.0928,
+      "vec_p50_ms": 102.77965001296252,
+      "vec_p95_ms": 109.03225000074599,
+      "vec_within_budget": true,
+      "vec_recall_at_k_vs_exact_mean": 1.0,
+      "vec_recall_at_k_vs_exact_min": 1.0,
+      "vec_db_bytes": 157630464,
+      "vec_bytes_per_unit": 3152.60928,
+      "persistence_exact_repeats": true,
+      "persistence_vec_repeats": true,
+      "incr_insert_200_s": 0.007070699997711927,
+      "incr_delete_100_s": 0.0006040000007487833,
+      "incr_counts": {
+        "files": 0,
+        "embeddings": 50100
+      },
+      "incr_expected": 50100,
+      "incr_count_ok": true,
+      "incr_deleted_absent": true,
+      "status": "measured"
+    },
+    "250000": {
+      "n": 250000,
+      "dim": 768,
+      "seed": 250042,
+      "topk": 10,
+      "n_query_samples": 200,
+      "exact_build_s": 96.08640240004752,
+      "exact_counts": {
+        "files": 0,
+        "embeddings": 250000
+      },
+      "vec_build_s": 112.30313159996876,
+      "vec_counts": {
+        "ids": 250000,
+        "vec_items": 250000
+      },
+      "exact_fetch_5x_p50_ms": 1295.8168999757618,
+      "exact_fetch_5x_p95_ms": 3067.4824199755676,
+      "exact_load_rows": 250000,
+      "exact_rank_only_p50_ms": 155.06605000700802,
+      "exact_rank_only_p95_ms": 173.75618503137954,
+      "exact_e2e_n": 10,
+      "exact_e2e_p50_ms": 1419.5470999984536,
+      "exact_e2e_p95_ms": 1823.4825049759813,
+      "vector_budget_p95_ms": 750.0,
+      "exact_within_budget_e2e": false,
+      "exact_db_bytes": 1033482240,
+      "exact_bytes_per_unit": 4133.92896,
+      "vec_p50_ms": 514.2004000081215,
+      "vec_p95_ms": 547.3625650367467,
+      "vec_within_budget": true,
+      "vec_recall_at_k_vs_exact_mean": 1.0,
+      "vec_recall_at_k_vs_exact_min": 1.0,
+      "vec_db_bytes": 788152320,
+      "vec_bytes_per_unit": 3152.60928,
+      "persistence_exact_repeats": true,
+      "persistence_vec_repeats": true,
+      "incr_insert_200_s": 0.004584300040733069,
+      "incr_delete_100_s": 0.0005094999796710908,
+      "incr_counts": {
+        "files": 0,
+        "embeddings": 250100
+      },
+      "incr_expected": 250100,
+      "incr_count_ok": true,
+      "incr_deleted_absent": true,
+      "status": "measured"
+    }
+  },
+  "fts": {
+    "n_files": 2000,
+    "build_s": 0.023677300021518022,
+    "n_query_samples": 200,
+    "p50_ms": 0.07219999679364264,
+    "p95_ms": 0.2543850132497027,
+    "queries_with_hits": 180,
+    "lexical_budget_p95_ms": 150.0,
+    "within_budget": true,
+    "exact_IMG_4281_hits": 1,
+    "prefix_hits": 2,
+    "invalid_syntax_status": "invalid-syntax",
+    "invalid_syntax_rows": 0,
+    "db_bytes": 444776
+  },
+  "notes": [
+    "Synthetic seeded vectors: storage machinery only, no semantic claim.",
+    "Retrieval latency excludes query-embedding inference (pre-generated queries).",
+    "Budget verdicts compare like-for-like full paths: ExactStore.search() end-to-end (gate+fetch+rank, n=10) vs VecStore.knn (gate+SQL, n=200). rank_only is an unchecked compute diagnostic, never a verdict.",
+    "exact_fetch_5x is warm OS/SQLite page cache after iteration 1, not cold start.",
+    "sqlite-vec 0.1.9 default L2 metric on L2-normalized vectors; ordering equals cosine (parity recall measured vs exact ground truth).",
+    "ANN recall here is storage-correctness recall vs the exact baseline, NOT LocalFind semantic retrieval quality (P0-T007 suite, separate).",
+    "Free-RAM preflight is Windows-only (ctypes GlobalMemoryStatusEx); elsewhere RAM reads unknown and the 250k scale reports BLOCKED."
+  ],
+  "appendix_256d": {
+    "purpose": "Same runner/code, 250k units at the 256-d contract dim: isolates the dimension lever for storage/latency. No retrieval-quality claim (dimension choice needs P0-T007 quality data, still deferred).",
+    "env": {
+      "os": "win32",
+      "python": "3.12.10",
+      "sqlite": "3.49.1",
+      "numpy": "2.4.6",
+      "sqlite_vec": "sqlite-vec-py-0.1.9",
+      "sqlite_vec_dll": "C:\\Program Files\\Python312\\Lib\\site-packages\\sqlite_vec\\vec0.dll",
+      "sqlite_vec_dll_bytes": 289280,
+      "cpu_count": 16,
+      "free_ram_bytes": 3521097728,
+      "free_disk_bytes_workdir": 33099821056
+    },
+    "config": {
+      "scales": [
+        250000
+      ],
+      "dim": 256,
+      "queries": 200,
+      "topk": 10,
+      "seed": 42
+    },
+    "scales": {
+      "250000": {
+        "n": 250000,
+        "dim": 256,
+        "seed": 250042,
+        "topk": 10,
+        "n_query_samples": 200,
+        "exact_build_s": 2.457403099979274,
+        "exact_counts": {
+          "files": 0,
+          "embeddings": 250000
+        },
+        "vec_build_s": 4.695037600002252,
+        "vec_counts": {
+          "ids": 250000,
+          "vec_items": 250000
+        },
+        "exact_fetch_5x_p50_ms": 642.6367000094615,
+        "exact_fetch_5x_p95_ms": 648.6233599600382,
+        "exact_load_rows": 250000,
+        "exact_rank_only_p50_ms": 145.64164998591878,
+        "exact_rank_only_p95_ms": 164.86467001377605,
+        "exact_e2e_n": 10,
+        "exact_e2e_p50_ms": 818.5677499859594,
+        "exact_e2e_p95_ms": 858.5666549945017,
+        "vector_budget_p95_ms": 750.0,
+        "exact_within_budget_e2e": false,
+        "exact_db_bytes": 347762688,
+        "exact_bytes_per_unit": 1391.050752,
+        "vec_p50_ms": 171.95210000500083,
+        "vec_p95_ms": 180.83827497903255,
+        "vec_within_budget": true,
+        "vec_recall_at_k_vs_exact_mean": 1.0,
+        "vec_recall_at_k_vs_exact_min": 1.0,
+        "vec_db_bytes": 272699392,
+        "vec_bytes_per_unit": 1090.797568,
+        "persistence_exact_repeats": true,
+        "persistence_vec_repeats": true,
+        "incr_insert_200_s": 0.005873899965081364,
+        "incr_delete_100_s": 0.0005467000300996006,
+        "incr_counts": {
+          "files": 0,
+          "embeddings": 250100
+        },
+        "incr_expected": 250100,
+        "incr_count_ok": true,
+        "incr_deleted_absent": true,
+        "status": "measured"
+      }
+    },
+    "notes": [
+      "Synthetic seeded vectors: storage machinery only, no semantic claim.",
+      "Retrieval latency excludes query-embedding inference (pre-generated queries).",
+      "Budget verdicts compare like-for-like full paths: ExactStore.search() end-to-end (gate+fetch+rank, n=10) vs VecStore.knn (gate+SQL, n=200). rank_only is an unchecked compute diagnostic, never a verdict.",
+      "exact_fetch_5x is warm OS/SQLite page cache after iteration 1, not cold start.",
+      "sqlite-vec 0.1.9 default L2 metric on L2-normalized vectors; ordering equals cosine (parity recall measured vs exact ground truth).",
+      "ANN recall here is storage-correctness recall vs the exact baseline, NOT LocalFind semantic retrieval quality (P0-T007 suite, separate).",
+      "Free-RAM preflight is Windows-only (ctypes GlobalMemoryStatusEx); elsewhere RAM reads unknown and the 250k scale reports BLOCKED."
+    ]
+  }
+}
