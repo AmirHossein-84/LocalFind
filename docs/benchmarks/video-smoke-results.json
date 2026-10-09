@@ -1,7 +1,7 @@
 {
   "model_id": "google/embeddinggemma-2",
   "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b",
-  "model_source": "project-local",
+  "model_source": "project-local(revision-verified)",
   "device": "cpu",
   "torch_dtype": "torch.float32",
   "preprocessing": {
@@ -157,11 +157,11 @@
     }
   ],
   "timings_s": {
-    "load": 4.170739700028207,
-    "probe_mean": 0.06502750003710389,
-    "extract_mean": 0.10058097998262383,
-    "decode_mean": 0.046074810007121415,
-    "encode_mean": 3.487622240005294,
+    "load": 2.910715500009246,
+    "probe_mean": 0.5929399500018917,
+    "extract_mean": 0.08355083999340422,
+    "decode_mean": 0.03064647001447156,
+    "encode_mean": 2.8789645900018512,
     "encode_n": 10
   },
   "checks": {},
@@ -264,8 +264,8 @@
     }
   ],
   "memory_mb": {
-    "rss_before": 410.968064,
-    "rss_after": 2628.644864,
-    "rss_delta": 2217.6767999999997
+    "rss_before": 410.279936,
+    "rss_after": 2640.314368,
+    "rss_delta": 2230.034432
   }
 }

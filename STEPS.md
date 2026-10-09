@@ -42,7 +42,7 @@
   - **Do:** Probe two different clips using ffprobe; select 2–3 bounded millisecond intervals per clip; encode each segment with an actually supported video input path; test short visual query returning relevant interval; measure decode and encode separately.
   - **Done / prove:** each returned vector maps to its exact source/start/end and real visual result; unsupported runtime/API is logged as a blocker rather than faked using image-only embeddings.
 
-- [ ] **P0-T006 — Dtype, dimension and embedding compatibility tests**
+- [x] **P0-T006 — Dtype, dimension and embedding compatibility tests**
   - **Deps:** P0-T004, P0-T005. **Touch:** `benchmarks/embedding_invariants.py`, `docs/benchmarks/embedding-invariants.md`.
   - **Do:** Compare fp32 versus supported bf16 on representative hardware, dimensions 768/512/256, L2 re-normalize truncated outputs, validate finite values/nonzero norms; reject dimension/signature mismatch. Capture example prefix differences for text queries.
   - **Done / prove:** tests fail on NaN/inf, mixed dimensions, wrong normalization; report chosen candidate dimension *only* after quality comparison. **Do not:** silently switch model or precision.
@@ -352,10 +352,10 @@ Reviewer decision + date: pending
 
 - **Current Phase:** Phase 0 — feasibility
 - **Current Milestone:** M0 (pending)
-- **Current Task:** P0-T006 — Dtype, dimension and embedding compatibility tests
-- **Last Completed Task:** P0-T005 — Segment-level video embedding experiment (2026-10-08; project-local model snapshot verified; 10 video segments 768-d, 3/3 query hits, independent review APPROVED)
+- **Current Task:** P0-T007 — Retrieval-quality feasibility benchmark
+- **Last Completed Task:** P0-T006 — Dtype, dimension and embedding compatibility tests (2026-10-08; 768/512/256/128 renorm-validated, 17 negative gates, bf16 rejected on CPU, fp32 only, review APPROVED, no dimension chosen)
 - **Blocked Tasks:** None recorded (Phase 0 dependencies deliberately pending)
 - **Known Blockers:** Windows runtime compatibility, retrieval quality, packaging and license obligations must be verified in Phase 0; these are *research gates*, not known failures.
 - **Architecture Review Queue:** Empty
 - **New Risks:** See PLAN.md §14; add discoveries with risk ID.
-- **Last Documentation Review:** 2026-10-08 (P0-T005 acceptance verified incl. independent review; no product code exists)
+- **Last Documentation Review:** 2026-10-08 (P0-T006 acceptance verified incl. independent review; no product code exists)

@@ -1,0 +1,154 @@
+{
+  "model_id": "google/embeddinggemma-2",
+  "revision": "914f7f89142e33e77833254d9c9b90c3cef7303b",
+  "device": "cpu",
+  "dims": {
+    "768": {
+      "n_vectors": 7,
+      "all_finite_norm": true,
+      "sig_example": "eg2@914f7f8|text+image|p0t006-v1|image|n/a|768|fp32|l2"
+    },
+    "512": {
+      "n_vectors": 7,
+      "all_finite_norm": true,
+      "sig_example": "eg2@914f7f8|text+image|p0t006-v1|image|n/a|512|fp32|l2"
+    },
+    "256": {
+      "n_vectors": 7,
+      "all_finite_norm": true,
+      "sig_example": "eg2@914f7f8|text+image|p0t006-v1|image|n/a|256|fp32|l2"
+    },
+    "128": {
+      "n_vectors": 7,
+      "all_finite_norm": true,
+      "sig_example": "eg2@914f7f8|text+image|p0t006-v1|image|n/a|128|fp32|l2"
+    }
+  },
+  "precision": {
+    "fp32": {
+      "ran": true,
+      "param_dtype": "torch.float32"
+    },
+    "cpu_bf16_flag": null,
+    "bf16": {
+      "ran": false,
+      "error": "ValueError: E_NORM: norm 0.997292 != 1.0 (re-normalize after truncation)"
+    },
+    "fp16": {
+      "ran": false,
+      "reason": "rejected by policy (card: silent NaNs; R-11)"
+    }
+  },
+  "ranking_by_dim": {
+    "768": {
+      "red_query_order": [
+        "img_red",
+        "seg_vid_001_0_3000",
+        "seg_vid_001_3000_6000",
+        "img_bars"
+      ],
+      "red_top": "img_red",
+      "blue_query_order": [
+        "seg_vid_001_3000_6000",
+        "img_bars",
+        "seg_vid_001_0_3000",
+        "img_red"
+      ],
+      "blue_top": "seg_vid_001_3000_6000"
+    },
+    "512": {
+      "red_query_order": [
+        "img_red",
+        "seg_vid_001_0_3000",
+        "seg_vid_001_3000_6000",
+        "img_bars"
+      ],
+      "red_top": "img_red",
+      "blue_query_order": [
+        "seg_vid_001_3000_6000",
+        "img_bars",
+        "seg_vid_001_0_3000",
+        "img_red"
+      ],
+      "blue_top": "seg_vid_001_3000_6000"
+    },
+    "256": {
+      "red_query_order": [
+        "img_red",
+        "seg_vid_001_0_3000",
+        "seg_vid_001_3000_6000",
+        "img_bars"
+      ],
+      "red_top": "img_red",
+      "blue_query_order": [
+        "seg_vid_001_3000_6000",
+        "img_bars",
+        "seg_vid_001_0_3000",
+        "img_red"
+      ],
+      "blue_top": "seg_vid_001_3000_6000"
+    },
+    "128": {
+      "red_query_order": [
+        "img_red",
+        "seg_vid_001_0_3000",
+        "seg_vid_001_3000_6000",
+        "img_bars"
+      ],
+      "red_top": "img_red",
+      "blue_query_order": [
+        "seg_vid_001_3000_6000",
+        "img_bars",
+        "img_red",
+        "seg_vid_001_0_3000"
+      ],
+      "blue_top": "seg_vid_001_3000_6000"
+    }
+  },
+  "prefix_by_dim": {
+    "768": {
+      "prefixed": 0.8285595668431005
+    },
+    "512": {
+      "prefixed": 0.8325264853276733
+    },
+    "256": {
+      "prefixed": 0.8416772091446144
+    },
+    "128": {
+      "prefixed": 0.8985804652627075
+    }
+  },
+  "negative_tests": [
+    "dim-mismatch: rejected (E_MISMATCH: field 'dim': 768 != 128 -- refusing to mix)",
+    "dtype-mismatch: rejected (E_MISMATCH: field 'dtype': 'fp32' != 'bf16' -- refusing to mix)",
+    "norm-mismatch: rejected (E_MISMATCH: field 'norm': 'l2' != 'none' -- refusing to mix)",
+    "revision-mismatch: rejected (E_MISMATCH: field 'revision': '914f7f8' != 'deadbee' -- refusing to mix)",
+    "prep-mismatch: rejected (E_MISMATCH: field 'prep': 'p0t006-v1' != 'other-v9' -- refusing to mix)",
+    "segment-mismatch: rejected (E_MISMATCH: field 'segment': 'n/a' != 'thirds' -- refusing to mix)",
+    "model-mismatch: rejected (E_MISMATCH: field 'model': 'eg2' != 'other' -- refusing to mix)",
+    "encoders-mismatch: rejected (E_MISMATCH: field 'encoders': 'text+image' != 'text-only' -- refusing to mix)",
+    "modality-mismatch: rejected (E_MISMATCH: field 'modality': 'image' != 'video' -- refusing to mix)",
+    "nan-vector: rejected (E_NONFINITE: NaN or Inf present)",
+    "inf-vector: rejected (E_NONFINITE: NaN or Inf present)",
+    "zero-vector: rejected (E_ZERO_NORM: zero vector)",
+    "unnormalized: rejected (E_NORM: norm 2.000000 != 1.0 (re-normalize after truncation))",
+    "wrong-len: rejected (E_DIM: len 4 != 3)",
+    "fp16-policy: rejected (E_DTYPE_POLICY: dtype 'fp16' not supported (never fp16))",
+    "dim511-policy: rejected (E_DIM_POLICY: dim 511 not in (768, 512, 256, 128))",
+    "identical-signatures: accepted"
+  ],
+  "timings_s": {
+    "load_fp32": 3.2026745000039227,
+    "encode_768_total": 15.696531000023242,
+    "sweep_truncate_rank": 0.006288600037805736,
+    "load_bf16": 2.340681300032884
+  },
+  "model_source": "project-local(revision-verified)",
+  "regression_768_512_256": "PASS",
+  "memory_mb": {
+    "rss_before": 410.7264,
+    "rss_after": 1676.16512,
+    "rss_delta": 1265.4387199999999
+  }
+}
