@@ -8,16 +8,19 @@ correctness suite: `benchmarks/vector_bench/` (28 unit tests green).
 > Scope: storage/retrieval **machinery** (latency, size, correctness,
 > persistence). Vectors are seeded random unit vectors at the P0-T006
 > contract dims — this benchmark **cannot and does not** measure model
-> relevance. ANN recall below is storage-correctness recall against the
-> exact baseline, NOT LocalFind semantic quality (P0-T007 suite, separate).
+> relevance. Recall below is storage-correctness recall of the tested
+> `vec0` flat-KNN scan against the exact baseline, NOT LocalFind
+> semantic quality (P0-T007 suite, separate). The tested sqlite-vec
+> 0.1.9 `vec0` configuration performs an exact brute-force KNN scan
+> (not approximate ANN); true approximate ANN was not evaluated here.
 > No ADR is accepted by this task; all PLAN.md ADRs stay **PROPOSED**
 > pending M0 review (P0-T012).
 
 ## Method (reproducible)
 
 - Backends: `ExactStore` (metadata + FTS5 + float32 BLOB exact cosine,
-  ADR-004 baseline) vs `VecStore` (sqlite-vec 0.1.9 `vec0`, default L2
-  metric) over identical unit ids. Both carry the full P0-T006 signature;
+  ADR-004 baseline) vs `VecStore` (sqlite-vec 0.1.9 `vec0` exact flat-KNN
+  scan, default L2 metric) over identical unit ids. Both carry the full P0-T006 signature;
   inserts validate dim/finite/unit-norm, queries pass the shared-space gate
   with a **text-query** signature against image vectors (the real
   cross-modal gate, not a same-sig shortcut).

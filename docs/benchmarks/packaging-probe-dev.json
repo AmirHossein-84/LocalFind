@@ -1,0 +1,84 @@
+{
+  "sidecar_kind": "script",
+  "isolated_hf": true,
+  "steps": {
+    "startup_ms": 73.2,
+    "handshake_roundtrip_ms": 61.0,
+    "text_cold_roundtrip_ms": 12195.0,
+    "text_warm_roundtrip_ms": 49.4,
+    "image_roundtrip_ms": 3775.2,
+    "malformed_handled": true,
+    "exit_code": 0,
+    "stderr_bytes": 608,
+    "stderr_clean": true
+  },
+  "handshake": {
+    "sidecar_version": "0.1.0",
+    "ops": [
+      "handshake",
+      "embed_text",
+      "embed_image",
+      "shutdown"
+    ],
+    "model_loaded": false
+  },
+  "text_cold": {
+    "dim": 768,
+    "norm": 1.0,
+    "sig_string": "eg2@914f7f8|text+image|p0t010-v1|text|n/a|768|fp32|l2",
+    "sample": [
+      0.019589,
+      -0.009894,
+      -0.009505,
+      -0.016783
+    ],
+    "timings_ms": {
+      "encode_ms": 282.16850000899285,
+      "load_ms": 4221.785200003069
+    }
+  },
+  "text_warm": {
+    "dim": 768,
+    "norm": 1.0,
+    "sig_string": "eg2@914f7f8|text+image|p0t010-v1|text|n/a|768|fp32|l2",
+    "sample": [
+      0.019589,
+      -0.009894,
+      -0.009505,
+      -0.016783
+    ],
+    "timings_ms": {
+      "encode_ms": 48.61599998548627
+    }
+  },
+  "image": {
+    "dim": 768,
+    "norm": 1.0,
+    "sig_string": "eg2@914f7f8|text+image|p0t010-v1|image|n/a|768|fp32|l2",
+    "sample": [
+      -0.020153,
+      -0.069262,
+      0.039081,
+      -0.003868
+    ],
+    "timings_ms": {
+      "encode_ms": 3658.4722000407055
+    }
+  },
+  "text_256": {
+    "dim": 256,
+    "norm": 1.0,
+    "sig_string": "eg2@914f7f8|text+image|p0t010-v1|text|n/a|256|fp32|l2",
+    "sample": [
+      0.027958,
+      -0.014122,
+      -0.013566,
+      -0.023955
+    ],
+    "timings_ms": {
+      "encode_ms": 39.78389996336773
+    }
+  },
+  "text_256_truncation_cos": 1.0,
+  "peak_rss_mb_best_effort": null
+}

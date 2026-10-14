@@ -1,0 +1,110 @@
+# P0-T010 — Inference sidecar packaging spike (CI clean-VM validation).
+#
+# Phase-0 prototype only, NOT production release automation.
+# Manual trigger to control Windows-runner minute cost (~30-60 min/build).
+#
+# What CI proves (clean windows-latest VM, no project venv, empty HF cache):
+#   - PyInstaller -D build succeeds from pinned deps (torch CPU).
+#   - No-model protocol suite 8/8 green on the runner.
+#   - Packaged handshake launches standalone (model NOT preloaded).
+# What CI does NOT do (stays local-only evidence):
+#   - embed_text/embed_image: google/embeddinggemma-2 is gated (license
+#     acceptance + HF token) and 1.5 GB; not downloaded in CI. Those
+#     measurements come from the dev-machine probe
+#     (docs/benchmarks/packaging-probe-dev.json) and are marked NOT RUN here.
+
+name: p0-t010-packaging-spike
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p0-t010-packaging-spike
+  cancel-in-progress: true
+
+jobs:
+  windows-sidecar:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      PYTHONUTF8: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned experiment deps (torch CPU)
+        run: |
+          python -m pip install --upgrade pip
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r benchmarks/requirements-smoke.txt
+          pip install pyinstaller==6.10.0
+          pip list --format=freeze | findstr /I "torch transformers sentence tokenizers safetensors pillow numpy pyinstaller"
+
+      - name: No-model protocol tests (no model required)
+        run: python -m unittest benchmarks.packaging.test_sidecar_protocol -v
+
+      - name: Stage transformers data files (CI mirror of D:/lf-p010/stage)
+        run: |
+          python - <<'EOF'
+          import shutil
+          from pathlib import Path
+          import transformers
+          src = Path(transformers.__file__).resolve().parent
+          dst = Path("D:/lf-ci-stage/transformers-full")
+          shutil.copytree(src, dst, dirs_exist_ok=True)
+          print("staged", dst)
+          EOF
+
+      - name: PyInstaller -D build (torchvision/torchcodec excluded, see spike doc)
+        run: |
+          python -m PyInstaller -D --noconfirm --name lf-sidecar --distpath D:/lf-ci/dist --workpath D:/lf-ci/build --specpath D:/lf-ci --collect-all sentence_transformers --collect-all transformers --collect-all tokenizers --collect-all safetensors --collect-all packaging --collect-data PIL --collect-submodules scipy --collect-submodules sklearn --hidden-import numpy._core._exceptions --hidden-import scipy._cyutility --exclude-module torchvision --exclude-module torchcodec --exclude-module torchaudio --exclude-module av --add-data "D:/lf-ci-stage/transformers-full;transformers" benchmarks/packaging/sidecar.py > D:/lf-ci/build-ci.log 2>&1
+          echo BUILD_EXIT:$LASTEXITCODE
+          Get-Content D:/lf-ci/build-ci.log | Select-Object -Last 5
+
+      - name: Packaged handshake on clean env (empty HF cache, no venv vars)
+        run: |
+          $env:HF_HOME = "D:/lf-ci/empty-hf"
+          $env:HUGGINGFACE_HUB_CACHE = "D:/lf-ci/empty-hf"
+          $env:TRANSFORMERS_CACHE = "D:/lf-ci/empty-hf"
+          New-Item -ItemType Directory -Path D:/lf-ci/empty-hf -Force | Out-Null
+          # clean-runner analogues of host_probe.py spawn guards:
+          Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
+          Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+          Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
+          echo '{"protocol_version":"1.0","request_id":"h1","op":"handshake","payload":{}}' | D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe --model-dir D:/lf-ci/missing-model-test
+          echo HANDSHAKE_EXIT:$LASTEXITCODE
+
+      - name: Size report
+        run: |
+          $sum = (Get-ChildItem D:/lf-ci/dist -Recurse | Measure-Object -Property Length -Sum).Sum
+          echo ("DIST_MB={0}" -f [math]::Round($sum/1MB,1))
+          (Get-ChildItem D:/lf-ci/dist -Recurse | Measure-Object -Property Length -Sum) | Format-List Count, Sum
+          Get-ChildItem D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe | Format-List Length, LastWriteTime
+
+      - name: Upload build log + reports (small, must succeed)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lf-sidecar-ci-logs
+          path: |
+            D:/lf-ci/build-ci.log
+            docs/benchmarks/packaging-probe-dev.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload packaged dist (large; may hit plan storage limits)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lf-sidecar-windows-dir
+          path: D:/lf-ci/dist/lf-sidecar
+          retention-days: 7
