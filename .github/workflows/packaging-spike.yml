@@ -53,8 +53,8 @@ jobs:
         run: python -m unittest benchmarks.packaging.test_sidecar_protocol -v
 
       - name: Stage transformers data files (CI mirror of D:/lf-p010/stage)
+        shell: python
         run: |
-          python - <<'EOF'
           import shutil
           from pathlib import Path
           import transformers
@@ -62,7 +62,6 @@ jobs:
           dst = Path("D:/lf-ci-stage/transformers-full")
           shutil.copytree(src, dst, dirs_exist_ok=True)
           print("staged", dst)
-          EOF
 
       - name: PyInstaller -D build (torchvision/torchcodec excluded, see spike doc)
         run: |
