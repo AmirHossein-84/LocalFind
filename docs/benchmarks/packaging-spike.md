@@ -108,6 +108,26 @@ explicit `--hidden-import` for `...numpy.fft` and its sibling
 `...numpy.linalg` — the same two the earlier local PyInstaller command
 carried. No code change; workflow flags only.
 
+## Fourth packaging bug: transformers docstring introspection frozen
+
+Past scipy, the frozen import died in
+`sentence_transformers/base/modules/transformer.py` (`from transformers
+import ... AutoProcessor ...`) → `processing_auto` →
+`image_processing_utils` → `processing_utils.py:657`, where
+`ProcessorMixin.__call__` is decorated with `@auto_docstring` at class
+definition time. The decorator derives processor-ness from
+`inspect.getsourcefile()`; frozen, the source is unresolvable the way
+the check expects, both processor checks return False, and
+`_process_kwargs_parameters` raises `ValueError: Unrolling kwargs is
+not supported for __call__ of None class`. In dev the same decorator
+resolves `processing_utils.py` and succeeds. Generated docstrings have
+no inference value, so the fix is a frozen-only PyInstaller runtime
+hook (`benchmarks/packaging/pyi_rth_freeze_compat.py`, wired via
+`--runtime-hook`): it wraps only the raising helper with a
+ValueError→`("", "")` fallback. Import chain, signatures, and behavior
+are untouched, and the hook itself is broadly guarded so it can never
+break frozen startup (the CI handshake step proves that leg).
+
 ## Alternatives assessed (spike scope)
 
 - **PyInstaller `-D` (directory): chosen.** Proven handshake, 333 MB,
