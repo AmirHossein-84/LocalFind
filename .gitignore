@@ -10,6 +10,10 @@ models/
 *.ckpt
 *.gguf
 
+# Downloaded CI packaging artifacts (P0-T010 spike evidence, R-24).
+# Large binaries live here for local inspection only, never committed.
+/ci-artifacts/
+
 # ── App-owned runtime/index data ──
 # Local app databases, vector stores, thumbnails, and caches.
 # Per PLAN.md §6 these live under the per-user OS app-data dir at runtime;
