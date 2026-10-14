@@ -89,6 +89,12 @@ jobs:
           Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
           Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
           Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
+          $exe = 'D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe'
+          if (-not (Test-Path $exe)) {
+            Write-Error "Executable not found at $exe — build likely failed. Dist contents:"
+            Get-ChildItem D:/lf-ci/dist -Recurse -ErrorAction SilentlyContinue | Format-List FullName
+            exit 1
+          }
           $resp = echo '{"protocol_version":"1.0","request_id":"h1","op":"handshake","payload":{}}' | D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe --model-dir D:/lf-ci/missing-model-test 2>&1
           $code = $LASTEXITCODE
           echo "HANDSHAKE_EXIT:$code"
@@ -117,10 +123,15 @@ jobs:
             }
           }
           if (Test-Path 'D:/lf-ci/dist/lf-sidecar') {
-            robocopy D:/lf-ci/dist/lf-sidecar "$env:GITHUB_WORKSPACE/artifacts/lf-sidecar" /E /NFL /NDL /NJH /NJS | Out-Null
-            if ($LASTEXITCODE -ge 8) { exit 1 }
+            # Zip, don't file-copy: the dist has 7k+ deep torch paths that
+            # exceed MAX_PATH under the longer workspace prefix (robocopy
+            # fails fast there). 7z handles long paths and shrinks the upload.
+            $sevenZip = (Get-Command 7z -ErrorAction SilentlyContinue).Source
+            if (-not $sevenZip) { $sevenZip = 'C:\Program Files\7-Zip\7z.exe' }
+            & $sevenZip a "$env:GITHUB_WORKSPACE/artifacts/lf-sidecar.zip" D:/lf-ci/dist/lf-sidecar -mx=1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { exit 1 }
           } else {
-            Write-Host 'dist not built; skipping dist copy'
+            Write-Host 'dist not built; skipping dist zip'
           }
 
       - name: Upload build log + reports (small, must succeed)
@@ -135,11 +146,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      - name: Upload packaged dist (large; may hit plan storage limits)
+      - name: Upload packaged dist zip (large; may hit plan storage limits)
         if: success()
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: lf-sidecar-windows-dir
-          path: ${{ github.workspace }}/artifacts/lf-sidecar
+          name: lf-sidecar-windows-zip
+          path: ${{ github.workspace }}/artifacts/lf-sidecar.zip
           retention-days: 7

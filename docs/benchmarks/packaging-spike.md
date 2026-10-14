@@ -95,6 +95,13 @@ has a pre-existing parse error under Windows PowerShell 5.1
 ## Pending for acceptance
 
 1. CI workflow green: protocol 8/8 + packaged handshake on clean VM.
+   Partial CI evidence in hand (run 38519715293, `windows-2025` runner):
+   deps install PASS, protocol 8/8 PASS, PyInstaller `-D`
+   (torchvision/torchcodec/torchaudio/av excluded) `BUILD_EXIT:0`,
+   packaged handshake `ok:true` with `loaded:false` (`HANDSHAKE_EXIT:0`),
+   dist **716.8 MB** (CI `--collect-all` set pulls more than local
+   build15's 333 MB). Only the artifact-upload step failed
+   (workspace-path rule, since fixed by zipping inside the workspace).
 2. Local packaged `embed_text` + `embed_image` offline with explicit
    `--model-dir` (excluded-torchvision binary), compat sigs match
    `eg2@914f7f8|text+image|p0t010-v1|…|768|fp32|l2`, truncation parity
