@@ -316,7 +316,7 @@ def handle_line(sidecar, line):
         elif isinstance(exc, OSError) and getattr(exc, "errno", None) is not None:
             detail += f":errno-{exc.errno}"
         log("error", "embed_failed", detail)
-        if os.environ.get("LOCALFIND_SIDECAR_DEBUG") == "1":
+        if os.environ.get("LOCALFIND_SIDECAR_DEBUG") in ("1", "2"):
             # Opt-in diagnostic mode only (R-04): may include local paths.
             # Never enabled by default or in committed probe runs.
             import traceback

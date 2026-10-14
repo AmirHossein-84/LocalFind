@@ -69,7 +69,15 @@ jobs:
           # PyInstaller does not create specpath; make the root first so the
           # log redirect below never fails with "could not find part of path".
           New-Item -ItemType Directory -Path D:/lf-ci -Force | Out-Null
-          python -m PyInstaller -D --noconfirm --name lf-sidecar --distpath D:/lf-ci/dist --workpath D:/lf-ci/build --specpath D:/lf-ci --collect-all sentence_transformers --collect-all transformers --collect-all tokenizers --collect-all safetensors --collect-all packaging --collect-data PIL --collect-submodules scipy --collect-submodules sklearn --hidden-import numpy._core._exceptions --hidden-import scipy._cyutility --exclude-module torchvision --exclude-module torchcodec --exclude-module torchaudio --exclude-module av --add-data "D:/lf-ci-stage/transformers-full;transformers" benchmarks/packaging/sidecar.py > D:/lf-ci/build-ci.log 2>&1
+          # Freeze workaround (transformers 5.19.0, pinned): transformers.models
+          # builds its lazy import map with os.scandir on dirname(__file__) IFF
+          # __file__ exists on disk (isfile fallback). Frozen, __file__ is a
+          # nonexistent .../models/__init__.pyc (code runs from the PYZ), so
+          # ship a 0-byte stub: isfile passes, scandir reads the real data
+          # tree (--collect-all), and lazy imports resolve via the PYZ.
+          New-Item -ItemType Directory -Path D:/lf-ci/stage -Force | Out-Null
+          New-Item -ItemType File -Path D:/lf-ci/stage/__init__.pyc -Force | Out-Null
+          python -m PyInstaller -D --noconfirm --name lf-sidecar --distpath D:/lf-ci/dist --workpath D:/lf-ci/build --specpath D:/lf-ci --collect-all sentence_transformers --collect-all transformers --collect-all tokenizers --collect-all safetensors --collect-all packaging --collect-data PIL --collect-submodules scipy --collect-submodules sklearn --hidden-import numpy._core._exceptions --hidden-import scipy._cyutility --exclude-module torchvision --exclude-module torchcodec --exclude-module torchaudio --exclude-module av --add-data "D:/lf-ci-stage/transformers-full;transformers" --add-data "D:/lf-ci/stage/__init__.pyc;transformers/models" benchmarks/packaging/sidecar.py > D:/lf-ci/build-ci.log 2>&1
           $code = $LASTEXITCODE
           echo "BUILD_EXIT:$code"
           if (Test-Path 'D:/lf-ci/build-ci.log') {

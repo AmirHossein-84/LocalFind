@@ -67,6 +67,34 @@ scan (log frozen, no build CPU) and was abandoned — no process left
 running. Packaging validation moved to the CI workflow above, which
 also satisfies the STEPS.md "clean Windows VM" leg.
 
+## Second packaging bug: transformers lazy-scan vs frozen `__file__`
+
+With torchvision excluded, the CI binary's `embed_text` failed with
+`E_INTERNAL:FileNotFoundError:errno-2` (reproduced locally against the
+downloaded CI dist). Debug traceback (`LOCALFIND_SIDECAR_DEBUG=1`):
+
+- `sentence_transformers` import → `transformers.models/__init__.py:552`
+  builds its lazy import map via `create_import_structure_from_path`,
+  which does `os.scandir(module_path)` after an
+  `if os.path.isfile(module_path): module_path = dirname(...)` fallback.
+- Frozen, `transformers.models.__file__` is a nonexistent
+  `.../transformers/models/__init__.pyc` (code runs from the PYZ), so
+  the fallback is skipped and scandir raises `FileNotFoundError`.
+  In dev, `__file__` is the real `__init__.py` and the fallback works.
+- Fix (build-time only, no runtime bundle writes): ship a 0-byte
+  `transformers/models/__init__.pyc` stub via
+  `--add-data "stage/__init__.pyc;transformers/models"`. The stub is
+  never executed (PYZ wins the import); it only lets the `isfile`
+  fallback find the real data tree (`--collect-all`), after which lazy
+  imports resolve through the frozen importer. Pinned to transformers
+  5.19.0 behavior — re-verify if the pin changes.
+- Also fixed: `LOCALFIND_SIDECAR_DEBUG=2` was dead code (nested inside
+  an `== "1"` check); the gate is now `in ("1", "2")`.
+- Follow-up (not done): the `--add-data transformers-full` overlay
+  likely duplicates what `--collect-all` already ships (CI dist
+  716.8 MB vs local build15 333 MB). Shrinking the bundle is deferred
+  until embed passes.
+
 ## Alternatives assessed (spike scope)
 
 - **PyInstaller `-D` (directory): chosen.** Proven handshake, 333 MB,
