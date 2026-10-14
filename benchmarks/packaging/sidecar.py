@@ -268,6 +268,21 @@ class Sidecar:
                 "model": dict(self.model_info, loaded=self.model is not None)}
 
 
+def _log_trace():
+    # Opt-in diagnostic mode only (R-04): may include local paths.
+    # Never enabled by default or in committed probe runs.
+    if os.environ.get("LOCALFIND_SIDECAR_DEBUG") not in ("1", "2"):
+        return
+    import traceback
+    lines = traceback.format_exc().strip().splitlines()
+    if os.environ.get("LOCALFIND_SIDECAR_DEBUG") == "2":
+        keep = lines  # full chain for local diagnosis (never committed)
+    else:
+        keep = lines[:10] + ["..."] + lines[-10:]
+    for tb_line in keep:
+        log("debug", "trace", tb_line.strip()[:300])
+
+
 def handle_line(sidecar, line):
     try:
         req = json.loads(line)
@@ -301,9 +316,11 @@ def handle_line(sidecar, line):
         msg = str(exc)
         code = msg.split(":", 1)[0] if ":" in msg else "E_INTERNAL"
         if code not in ("E_VALIDATION", "E_IMAGE", "E_MODEL_DIR", "E_LOAD",
-                        "E_DIM", "E_NONFINITE", "E_NORM", "E_TRUNC", "E_DTYPE"):
+                        "E_DIM", "E_NONFINITE", "E_NORM", "E_TRUNC", "E_DTYPE",
+                        "E_ZERO_NORM"):
             code, msg, retry = "E_INTERNAL", "internal error", True
             log("error", "embed_failed", "E_INTERNAL")
+            _log_trace()
             return err_response(rid, code, msg, retry)
         log("warn", "request_failed", code)
         return err_response(rid, code, msg, False)
@@ -316,17 +333,7 @@ def handle_line(sidecar, line):
         elif isinstance(exc, OSError) and getattr(exc, "errno", None) is not None:
             detail += f":errno-{exc.errno}"
         log("error", "embed_failed", detail)
-        if os.environ.get("LOCALFIND_SIDECAR_DEBUG") in ("1", "2"):
-            # Opt-in diagnostic mode only (R-04): may include local paths.
-            # Never enabled by default or in committed probe runs.
-            import traceback
-            lines = traceback.format_exc().strip().splitlines()
-            if os.environ.get("LOCALFIND_SIDECAR_DEBUG") == "2":
-                keep = lines  # full chain for local diagnosis (never committed)
-            else:
-                keep = lines[:10] + ["..."] + lines[-10:]
-            for tb_line in keep:
-                log("debug", "trace", tb_line.strip()[:300])
+        _log_trace()
         return err_response(rid, "E_INTERNAL", "internal error", True)
     return err_response(rid, "E_INTERNAL", "internal error", True)
 
