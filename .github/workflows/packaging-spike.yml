@@ -89,10 +89,12 @@ jobs:
           Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
           Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
           Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
-          $resp = echo '{"protocol_version":"1.0","request_id":"h1","op":"handshake","payload":{}}' | D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe --model-dir D:/lf-ci/missing-model-test
+          $resp = echo '{"protocol_version":"1.0","request_id":"h1","op":"handshake","payload":{}}' | D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe --model-dir D:/lf-ci/missing-model-test 2>&1
           $code = $LASTEXITCODE
           echo "HANDSHAKE_EXIT:$code"
-          echo "HANDSHAKE_RESP:$resp"
+          echo "HANDSHAKE_RESP:$($resp -join ' | ')"
+          "HANDSHAKE_EXIT:$code" | Out-File -Encoding utf8 D:/lf-ci/handshake.log
+          ($resp -join "`n") | Out-File -Append -Encoding utf8 D:/lf-ci/handshake.log
           if ($code -ne 0) { exit 1 }
           if ($resp -join "`n" -notmatch '"ok":\s*true') { Write-Error "handshake response not ok"; exit 1 }
 
@@ -103,13 +105,32 @@ jobs:
           (Get-ChildItem D:/lf-ci/dist -Recurse | Measure-Object -Property Length -Sum) | Format-List Count, Sum
           Get-ChildItem D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe | Format-List Length, LastWriteTime
 
+      - name: Copy CI outputs into workspace (upload-artifact only accepts workspace paths)
+        if: always()
+        run: |
+          New-Item -ItemType Directory -Path "$env:GITHUB_WORKSPACE/artifacts" -Force | Out-Null
+          foreach ($f in @('build-ci.log', 'handshake.log')) {
+            if (Test-Path "D:/lf-ci/$f") {
+              Copy-Item "D:/lf-ci/$f" "$env:GITHUB_WORKSPACE/artifacts/$f" -Force
+            } else {
+              Write-Host "D:/lf-ci/$f not found; continuing"
+            }
+          }
+          if (Test-Path 'D:/lf-ci/dist/lf-sidecar') {
+            robocopy D:/lf-ci/dist/lf-sidecar "$env:GITHUB_WORKSPACE/artifacts/lf-sidecar" /E /NFL /NDL /NJH /NJS | Out-Null
+            if ($LASTEXITCODE -ge 8) { exit 1 }
+          } else {
+            Write-Host 'dist not built; skipping dist copy'
+          }
+
       - name: Upload build log + reports (small, must succeed)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lf-sidecar-ci-logs
           path: |
-            D:/lf-ci/build-ci.log
+            ${{ github.workspace }}/artifacts/build-ci.log
+            ${{ github.workspace }}/artifacts/handshake.log
             docs/benchmarks/packaging-probe-dev.json
           if-no-files-found: warn
           retention-days: 7
@@ -120,5 +141,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lf-sidecar-windows-dir
-          path: D:/lf-ci/dist/lf-sidecar
+          path: ${{ github.workspace }}/artifacts/lf-sidecar
           retention-days: 7
