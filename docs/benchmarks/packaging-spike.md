@@ -98,6 +98,16 @@ downloaded CI dist). Debug traceback (`LOCALFIND_SIDECAR_DEBUG=1`):
   716.8 MB vs local build15 333 MB). Shrinking the bundle is deferred
   until embed passes.
 
+## Third packaging bug: scipy lazy submodule missed by modulegraph
+
+With the stubs in, imports progressed past transformers into scipy and
+failed with `ModuleNotFoundError:
+scipy._external.array_api_compat.numpy.fft` (raised from that
+package's own `__init__`, which modulegraph cannot see through). Fix:
+explicit `--hidden-import` for `...numpy.fft` and its sibling
+`...numpy.linalg` — the same two the earlier local PyInstaller command
+carried. No code change; workflow flags only.
+
 ## Alternatives assessed (spike scope)
 
 - **PyInstaller `-D` (directory): chosen.** Proven handshake, 333 MB,
