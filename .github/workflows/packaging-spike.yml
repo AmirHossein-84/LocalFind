@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: p0-t010-packaging-spike
@@ -65,9 +66,18 @@ jobs:
 
       - name: PyInstaller -D build (torchvision/torchcodec excluded, see spike doc)
         run: |
+          # PyInstaller does not create specpath; make the root first so the
+          # log redirect below never fails with "could not find part of path".
+          New-Item -ItemType Directory -Path D:/lf-ci -Force | Out-Null
           python -m PyInstaller -D --noconfirm --name lf-sidecar --distpath D:/lf-ci/dist --workpath D:/lf-ci/build --specpath D:/lf-ci --collect-all sentence_transformers --collect-all transformers --collect-all tokenizers --collect-all safetensors --collect-all packaging --collect-data PIL --collect-submodules scipy --collect-submodules sklearn --hidden-import numpy._core._exceptions --hidden-import scipy._cyutility --exclude-module torchvision --exclude-module torchcodec --exclude-module torchaudio --exclude-module av --add-data "D:/lf-ci-stage/transformers-full;transformers" benchmarks/packaging/sidecar.py > D:/lf-ci/build-ci.log 2>&1
-          echo BUILD_EXIT:$LASTEXITCODE
-          Get-Content D:/lf-ci/build-ci.log | Select-Object -Last 5
+          $code = $LASTEXITCODE
+          echo "BUILD_EXIT:$code"
+          if (Test-Path 'D:/lf-ci/build-ci.log') {
+            Get-Content 'D:/lf-ci/build-ci.log' | Select-Object -Last 5
+          } else {
+            Write-Host 'D:/lf-ci/build-ci.log not found'
+          }
+          if ($code -ne 0) { exit 1 }
 
       - name: Packaged handshake on clean env (empty HF cache, no venv vars)
         run: |
@@ -79,8 +89,12 @@ jobs:
           Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
           Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
           Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
-          echo '{"protocol_version":"1.0","request_id":"h1","op":"handshake","payload":{}}' | D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe --model-dir D:/lf-ci/missing-model-test
-          echo HANDSHAKE_EXIT:$LASTEXITCODE
+          $resp = echo '{"protocol_version":"1.0","request_id":"h1","op":"handshake","payload":{}}' | D:/lf-ci/dist/lf-sidecar/lf-sidecar.exe --model-dir D:/lf-ci/missing-model-test
+          $code = $LASTEXITCODE
+          echo "HANDSHAKE_EXIT:$code"
+          echo "HANDSHAKE_RESP:$resp"
+          if ($code -ne 0) { exit 1 }
+          if ($resp -join "`n" -notmatch '"ok":\s*true') { Write-Error "handshake response not ok"; exit 1 }
 
       - name: Size report
         run: |
@@ -102,6 +116,7 @@ jobs:
 
       - name: Upload packaged dist (large; may hit plan storage limits)
         if: success()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: lf-sidecar-windows-dir
