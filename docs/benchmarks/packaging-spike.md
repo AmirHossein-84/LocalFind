@@ -81,12 +81,15 @@ downloaded CI dist). Debug traceback (`LOCALFIND_SIDECAR_DEBUG=1`):
   `.../transformers/models/__init__.pyc` (code runs from the PYZ), so
   the fallback is skipped and scandir raises `FileNotFoundError`.
   In dev, `__file__` is the real `__init__.py` and the fallback works.
-- Fix (build-time only, no runtime bundle writes): ship a 0-byte
-  `transformers/models/__init__.pyc` stub via
-  `--add-data "stage/__init__.pyc;transformers/models"`. The stub is
-  never executed (PYZ wins the import); it only lets the `isfile`
-  fallback find the real data tree (`--collect-all`), after which lazy
-  imports resolve through the frozen importer. Pinned to transformers
+- Fix (build-time only, no runtime bundle writes): the single `models/`
+  stub proved the mechanism but the same lazy scan runs in every
+  `transformers/models/*/` subpackage (first failure past `models/`:
+  `gemma/__init__.pyc`). The workflow now mirrors a 0-byte
+  `__init__.pyc` next to **every** `__init__.py` in the transformers
+  tree (`stage-pyc/`, pure-pwsh loop, ~700 files). Stubs are never
+  executed (PYZ wins the import); they only let the `isfile` fallback
+  find the real data tree (`--collect-all`), after which lazy imports
+  resolve through the frozen importer. Pinned to transformers
   5.19.0 behavior — re-verify if the pin changes.
 - Also fixed: `LOCALFIND_SIDECAR_DEBUG=2` was dead code (nested inside
   an `== "1"` check); the gate is now `in ("1", "2")`.

@@ -69,15 +69,23 @@ jobs:
           # PyInstaller does not create specpath; make the root first so the
           # log redirect below never fails with "could not find part of path".
           New-Item -ItemType Directory -Path D:/lf-ci -Force | Out-Null
-          # Freeze workaround (transformers 5.19.0, pinned): transformers.models
-          # builds its lazy import map with os.scandir on dirname(__file__) IFF
-          # __file__ exists on disk (isfile fallback). Frozen, __file__ is a
-          # nonexistent .../models/__init__.pyc (code runs from the PYZ), so
-          # ship a 0-byte stub: isfile passes, scandir reads the real data
-          # tree (--collect-all), and lazy imports resolve via the PYZ.
-          New-Item -ItemType Directory -Path D:/lf-ci/stage -Force | Out-Null
-          New-Item -ItemType File -Path D:/lf-ci/stage/__init__.pyc -Force | Out-Null
-          python -m PyInstaller -D --noconfirm --name lf-sidecar --distpath D:/lf-ci/dist --workpath D:/lf-ci/build --specpath D:/lf-ci --collect-all sentence_transformers --collect-all transformers --collect-all tokenizers --collect-all safetensors --collect-all packaging --collect-data PIL --collect-submodules scipy --collect-submodules sklearn --hidden-import numpy._core._exceptions --hidden-import scipy._cyutility --exclude-module torchvision --exclude-module torchcodec --exclude-module torchaudio --exclude-module av --add-data "D:/lf-ci-stage/transformers-full;transformers" --add-data "D:/lf-ci/stage/__init__.pyc;transformers/models" benchmarks/packaging/sidecar.py > D:/lf-ci/build-ci.log 2>&1
+          # Freeze workaround (transformers 5.19.0, pinned): every lazily
+          # scanned transformers subpackage (models/, models/*/...) builds
+          # its import map with os.scandir on dirname(__file__) IFF __file__
+          # exists on disk (isfile fallback). Frozen, __file__ is a
+          # nonexistent .../__init__.pyc (code runs from the PYZ), so mirror
+          # a 0-byte __init__.pyc stub next to every __init__.py in the
+          # transformers tree. Stubs are never executed (PYZ wins imports);
+          # they only let the isfile fallback find the real data tree
+          # (--collect-all), after which lazy imports resolve frozen.
+          $tfRoot = Split-Path (python -c "import transformers; print(transformers.__file__)")
+          Get-ChildItem $tfRoot -Recurse -Filter __init__.py | ForEach-Object {
+            $rel = [IO.Path]::GetRelativePath($tfRoot, $_.DirectoryName)
+            $d = Join-Path 'D:/lf-ci/stage-pyc/transformers' $rel
+            New-Item -ItemType Directory $d -Force | Out-Null
+            New-Item -ItemType File (Join-Path $d '__init__.pyc') -Force | Out-Null
+          }
+          python -m PyInstaller -D --noconfirm --name lf-sidecar --distpath D:/lf-ci/dist --workpath D:/lf-ci/build --specpath D:/lf-ci --collect-all sentence_transformers --collect-all transformers --collect-all tokenizers --collect-all safetensors --collect-all packaging --collect-data PIL --collect-submodules scipy --collect-submodules sklearn --hidden-import numpy._core._exceptions --hidden-import scipy._cyutility --exclude-module torchvision --exclude-module torchcodec --exclude-module torchaudio --exclude-module av --add-data "D:/lf-ci-stage/transformers-full;transformers" --add-data "D:/lf-ci/stage-pyc/transformers;transformers" benchmarks/packaging/sidecar.py > D:/lf-ci/build-ci.log 2>&1
           $code = $LASTEXITCODE
           echo "BUILD_EXIT:$code"
           if (Test-Path 'D:/lf-ci/build-ci.log') {
